@@ -1,14 +1,14 @@
 ---
 name: megabrain
 description: "MegaBrain sovereign MCP orchestration and dev harness."
-version: 2.0.0
+version: 2.1.0
 author: Luiz Franco (LuizKarlos), Hermes Agent
 license: MIT
 platforms: [linux, macos]
 metadata:
   hermes:
     tags: [megabrain, mcp, orchestration, cumulative, harness]
-    related_skills: [agile-jev-orchestrator-loop, hermes-agent]
+    related_skills: [agile-jev-orchestrator-loop, canonical-pr-delivery-and-merge, hermes-agent]
 ---
 
 # MegaBrain Sovereign MCP Orchestration & Development Harness
@@ -16,7 +16,7 @@ metadata:
 ## Overview
 This skill governs the autonomous, verifiable orchestration of the **MegaBrain** sovereign platform via its native Model Context Protocol (MCP) server, multi-cycle cumulative development pipelines (`dev_mcp_v1` ... `dev_mcp_vN`), and fail-closed evidence sealing.
 
-It incorporates all verified platform improvements through `dev_mcp_v4` (immutable delta identity, crash-atomic report publication, deterministic barrier concurrency, and directory-level fsync durability).
+It incorporates all verified platform improvements through `dev_mcp_v5` (immutable delta identity, crash-atomic report publication, deterministic barrier concurrency, directory-level fsync durability, and post-link failure containment).
 
 ---
 
@@ -24,6 +24,7 @@ It incorporates all verified platform improvements through `dev_mcp_v4` (immutab
 - Orchestrating tasks, audits, or pipelines through the running MegaBrain FastMCP server.
 - Executing cumulative multi-cycle development iterations (`dev_mcp_v1` -> `dev_mcp_vN`).
 - Running sealed test batteries, evidence collection, and two-track independent review loops.
+- Promoting verified development cycles into canonical pull requests and merges.
 - Do not use for: Direct ad-hoc edits on canonical repository `LuizKarlos/megabrain` without worktree isolation.
 
 ---
@@ -57,15 +58,19 @@ It incorporates all verified platform improvements through `dev_mcp_v4` (immutab
    - Requests include `Authorization: Bearer <token>`.
    - Never commit `reports/auth/` to public git replicas. Never leak tokens or credentials in logs, diffs, or chat.
 
-5. **Proven Reviewer & Storage Invariants (Cumulative v1–v4)**:
+5. **Proven Reviewer & Storage Invariants (Cumulative v1–v5)**:
    - **v1**: Mandatory `delta_identity` (`base`, `head`, `diff_sha256`, `files_manifest`). Rejection if mismatch.
    - **v2**: Crash-atomic publication via `tempfile.mkstemp(dir=reports_dir)` -> `flush()` -> `os.fsync(fileno)` -> `os.link(temp, target)`. Guaranteed cleanup via `finally: os.unlink(temp)`. Winning reviewer model preservation on idempotent re-runs.
    - **v3**: Deterministic concurrency barrier testing (`Barrier(2)`), pre-publication failure containment, and certified stdout oracles (`TEMP_CLEANUP_ORACLE`, `CONCURRENT_LINK_ORACLE`).
    - **v4**: Directory durability: `descritor = os.open(reports_dir, os.O_RDONLY)` followed by `os.fsync(descritor)` and `finally: os.close(descritor)` immediately after successful `os.link`. Certified via `DIRECTORY_FSYNC_ORACLE`.
+   - **v5**: Post-link failure containment: if directory `fsync` raises an `OSError`, the exception propagates cleanly, the already linked report remains fully intact and parseable on disk, and the descriptor is closed deterministically in `finally: os.close(descritor)`. Certified via `POST_LINK_FSYNC_FAILURE_ORACLE`.
 
-6. **Replica Publishing Safeguards**:
+6. **Replica & Delivery Publishing Safeguards**:
    - Always remove `.github/workflows/` before pushing replica repositories to avoid permission failures with tokens lacking the `workflow` scope.
-   - Use `gh auth token` with basic HTTP authentication headers or set credentials explicitly.
+   - When global Git configuration rewrites HTTPS to SSH (`url.ssh://git@github.com/.insteadof`), push attempts default to SSH deploy keys and fail with permission denied. Isolate replica pushes using `GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1 git -c http.https://github.com/.extraheader="AUTHORIZATION: basic $AUTH" push -u origin <branch>` where `$AUTH` is `base64("x-access-token:" + gh auth token)`.
+   - Avoid force-deleting branches via forbidden deletion flags; clean up ephemeral worktrees using `git worktree remove --force <path>` followed by `git worktree prune`.
+   - When promoting a completed evolution to canonical `main`, never copy or push omitted workflow or package lockfiles from development replicas. Spawn an ephemeral delivery worktree anchored on canonical `main` (`FETCH_HEAD`), copy strictly the allowlisted functional files (`agents/...`, `tests/...`), verify `.github/workflows` has zero diff against canonical `main`, run `ci_pr.py` gates, and open the PR only upon explicit chat authorization.
+   - When designated reviewer models hit upstream usage quotas (HTTP 429 cooldown), strict governance forbids silent model swapping; use `clarify` to prompt the user for waiting or explicit substitution.
 
 ---
 
@@ -79,7 +84,8 @@ Essential orchestration workflows:
 3. `megabrain.decompose`: Creates DAG `WorkRecord`, topological order, and parallel waves.
 4. `megabrain.dispatch_subtask`: Prepares minimal ephemeral context bundle for workers.
 5. `megabrain.verify_subtask`: Validates worker execution against strict GREEN gates.
-6. `megabrain.export_evidence_pack`: Compiles verifiable cryptographic evidence.
+6. `megabrain.execute_pipeline`: Traverses DAG tasks in topological waves with Ed25519 cryptographic attestation.
+7. `megabrain.export_evidence_pack`: Compiles verifiable cryptographic evidence.
 
 ---
 
@@ -119,7 +125,7 @@ Pipeline updates must conform strictly to the 4-topic format (max 5 lines, no in
 ## Verification
 To verify compliance with this skill:
 1. Confirm replica is cumulative from $v_{k-1}$ (`git log` shows inherited commits).
-2. Confirm `.github/workflows` is absent before push.
+2. Confirm `.github/workflows` is absent before replica push, and preserved byte-for-byte in canonical delivery PRs.
 3. Confirm sealed operator logs (`.log` and `.done.json`) exist with matching `TEST_ID`.
 4. Confirm independent reviewer output contains dual verdicts and 100% delta coverage.
 5. Confirm no uncommitted or modified files exist on canonical repository `/srv/megabrain-dev/repository`.
