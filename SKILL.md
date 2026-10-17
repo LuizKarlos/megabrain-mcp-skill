@@ -1,5 +1,5 @@
 ---
-name: megabrain-mcp-orchestration
+name: megabrain
 description: "MegaBrain sovereign MCP orchestration and dev harness."
 version: 2.0.0
 author: Luiz Franco (LuizKarlos), Hermes Agent
