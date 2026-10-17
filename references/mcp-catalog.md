@@ -39,7 +39,7 @@ Authentication: `Authorization: Bearer <token>` from `reports/auth/.current_orch
 - `megabrain.export_audit_ledger`: Exports cryptographically verifiable Merkle audit ledger for a mission.
 - `megabrain.evaluate_execution_canary`: Evaluates structural, type, and output divergence across executions.
 - `megabrain.arbitrate_concurrency`: Arbitrates shared and exclusive resource locks across concurrent agents.
-- `megabrain.megabrain_adjudicate_consensus`: Cross-evaluates independent reviewers computing consensus score and conflict surfaces.
+- `megabrain.adjudicate_consensus`: Cross-evaluates independent reviewers computing consensus score and conflict surfaces.
 
 ## 6. Frontend, UI & Accessibility Tools
 - `megabrain.dom_audit`: Audits DOM structure for semantic hierarchy, image alt attributes, and WCAG accessibility compliance.
