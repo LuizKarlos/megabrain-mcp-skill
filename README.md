@@ -1,21 +1,51 @@
 # MegaBrain MCP Orchestration Skill
 
-Canonical, version-controlled skill and development harness for sovereign **MegaBrain** MCP orchestration, cumulative multi-cycle delivery pipelines, and fail-closed attestation.
+Canonical operational skill for interacting with the sovereign **MegaBrain** Model Context Protocol (MCP) server across AI harnesses and coding agents (Hermes, Claude, Cursor, Windsurf, Codex, etc.).
 
 ## Contents
-- `SKILL.md`: The operational skill specification compatible with Hermes Agent and autonomous cognitive harnesses.
-- `scripts/operator_runner.py`: Reusable, fail-fast operator runner generating sealed `.log` and `.done.json` execution receipts.
-- `references/mcp-catalog.md`: Exhaustive reference of all 37 canonical MegaBrain MCP tools, signatures, and contracts.
-- `references/cumulative-evolution-v1-v4.md`: Detailed audit of architectural improvements accumulated across `dev_mcp_v1` through `dev_mcp_v4`.
+- `SKILL.md`: The operational skill specification defining tool sequences, protocols, parameters, and best practices.
+- `references/mcp-catalog.md`: Catalog of canonical MegaBrain MCP tools, signatures, and contracts.
 
-## Installation into Hermes
-To install this skill into your active Hermes profile:
+## Installation
+
+### Hermes Agent
 ```bash
-mkdir -p ~/.hermes/skills/megabrain
-cp -r . ~/.hermes/skills/megabrain/megabrain-mcp-orchestration
+hermes skill add LuizKarlos/megabrain-mcp-skill
 ```
 
-## Governance
-- **Canonical Repo Protection**: All work runs in ephemeral worktrees. Pull Requests or Merges on `LuizKarlos/megabrain` require explicit, prior chat authorization.
-- **Cumulative Chaining**: Every evolution version $v_k$ strictly inherits from $v_{k-1}$.
-- **Dual-Track Review**: Fail-closed separation between runtime-critical MVP requirements and non-blocking hardening debts.
+### Claude Desktop
+```bash
+mkdir -p .agents/skills/megabrain && curl -fsSL "https://raw.githubusercontent.com/LuizKarlos/megabrain-mcp-skill/main/SKILL.md" -o .agents/skills/megabrain/SKILL.md
+```
+
+### Cursor IDE
+```bash
+mkdir -p .cursor/rules && curl -fsSL "https://raw.githubusercontent.com/LuizKarlos/megabrain-mcp-skill/main/SKILL.md" -o .cursor/rules/megabrain.mdc
+```
+
+### Windsurf
+```bash
+mkdir -p .windsurf/rules && curl -fsSL "https://raw.githubusercontent.com/LuizKarlos/megabrain-mcp-skill/main/SKILL.md" -o .windsurf/rules/megabrain.md
+```
+
+### Other Harnesses
+Download `SKILL.md` directly into your harness's rules or skills directory:
+```bash
+curl -fsSL "https://raw.githubusercontent.com/LuizKarlos/megabrain-mcp-skill/main/SKILL.md" -o <DESTINATION_PATH>
+```
+
+## Quick Start via MCP
+Configure your harness's MCP settings to point to your MegaBrain MCP endpoint with your Bearer token:
+```json
+{
+  "mcpServers": {
+    "megabrain": {
+      "url": "https://mcp.atlascommand.dev/mcp",
+      "headers": {
+        "Authorization": "Bearer <SEU_TOKEN_MCP>"
+      }
+    }
+  }
+}
+```
+Then invoke `megabrain.health` to verify connectivity.
