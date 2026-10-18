@@ -49,15 +49,18 @@ Transform unstructured user requests into formal execution contracts with clear 
 - **Tool**: `megabrain.refine_prompt`
 - **Arguments**:
   - `prompt` (string, required): The user task or engineering objective.
-  - `repo_path` (string, optional): Target workspace path (default: `"."`).
+  - `context` (string, optional): Relevant architectural or technical background.
+  - `risk_level` (string, optional): Assessed risk level (`"low"`, `"medium"`, `"high"`).
 - **Outcome**: Bounded contract with explicit file scopes and execution constraints.
 
 ### Step 3: DAG Task Decomposition
 Decompose the objective into an acyclic directed graph (DAG) of atomic, verifiable subtasks.
 - **Tool**: `megabrain.decompose`
 - **Arguments**:
-  - `goal` (string, required): The high-level engineering goal.
-  - `contract` (object or string, optional): Refined contract from Step 2.
+  - `prompt` (string, required): The high-level engineering goal.
+  - `tasks` (array of objects, optional): Explicit initial task specifications.
+  - `work_id` (string, optional): Pre-allocated WorkRecord identifier.
+  - `title` (string, optional): Short descriptive title for the mission.
 - **Outcome**: A `WorkRecord` containing topological waves of mutually independent tasks.
 
 ### Step 4: Ephemeral Subtask Dispatch
@@ -65,7 +68,8 @@ Prepare minimal, isolated context packages for each ready subtask.
 - **Tool**: `megabrain.dispatch_subtask`
 - **Arguments**:
   - `work_id` (string, required): Active WorkRecord identifier.
-  - `subtask_id` (string, required): Target subtask identifier.
+  - `task_id` (string, required): Target subtask identifier.
+  - `allowed_scope` (array of strings, optional): Specific files or paths permitted for this subtask.
 - **Outcome**: Ephemeral context bundle containing only the relevant code slices and requirements.
 
 ### Step 5: Subtask Verification Gate
@@ -73,8 +77,8 @@ Validate worker outputs against strict deterministic verification criteria befor
 - **Tool**: `megabrain.verify_subtask`
 - **Arguments**:
   - `work_id` (string, required): Active WorkRecord identifier.
-  - `subtask_id` (string, required): Executed subtask identifier.
-  - `test_command` (string, optional): Test command to execute and verify.
+  - `task_id` (string, required): Executed subtask identifier.
+  - `test_result` (object or string, optional): Test execution output or status dictionary.
 - **Outcome**: Verification receipt confirming green status.
 
 ### Step 6: Pipeline Execution & Topological Traversal
@@ -82,16 +86,20 @@ Execute or step through DAG waves sequentially while running ready tasks within 
 - **Tool**: `megabrain.execute_pipeline`
 - **Arguments**:
   - `work_id` (string, required): Active WorkRecord identifier.
-  - `max_parallel` (integer, optional): Maximum concurrent tasks per wave.
+  - `test_commands` (array of strings, optional): Test commands to validate pipeline execution.
+  - `max_remediations` (integer, optional): Maximum automatic healing attempts.
+  - `progress_token` (string, optional): Progress reporting identifier.
+  - `auto_heal` (boolean, optional): Whether to inject healing subtasks on failure.
+  - `optimize_routing` (boolean, optional): Optimize model routing across waves.
 - **Outcome**: Progress notifications and execution receipts per wave.
 
 ### Step 7: Multi-Reviewer Consensus Adjudication
 For critical changes, run independent adversarial reviews and compute weighted consensus.
 - **Tool**: `megabrain.adjudicate_consensus`
 - **Arguments**:
-  - `work_id` (string, required): WorkRecord under evaluation.
-  - `reviewers` (array, required): Review payloads or reviewer evaluations.
-  - `threshold` (number, optional): Minimum acceptance threshold (default: `0.8`).
+  - `task_id` (string, required): Target task under review.
+  - `reviews` (array of objects, optional): Independent review verdicts and findings.
+  - `work_id` (string, optional): Associated WorkRecord identifier.
 - **Outcome**: Consolidated verdict (`MVP_GO` / `MVP_NO_GO`, `SECURITY_GO` / `SECURITY_NO_GO`).
 
 ### Step 8: Cryptographic Evidence Export
@@ -109,11 +117,11 @@ MegaBrain provides domain-specific utilities to enhance code quality and user ex
 
 - `megabrain.dom_audit`:
   Audits HTML markup for semantic hierarchy (`h1` -> `h2` -> `h3`), image alt attributes, interactive element affordances, and WCAG 2.1 AA accessibility compliance.
-  - Arguments: `html_content` (string, required)
+  - Arguments: `html_content` (string, optional), `url` (string, optional), `standard` (string, optional)
 
 - `megabrain.css_validator`:
   Validates stylesheet syntax, unclosed braces, vendor prefix sanity, and layout integrity.
-  - Arguments: `css_content` (string, required)
+  - Arguments: `css_content` (string, optional), `file_path` (string, optional)
 
 - `megabrain.anti_slop_lint`:
   Scans generated copy and user-facing messages against artificial AI cliché patterns, robotic transition phrases, and empty filler to ensure humanized communication.
@@ -121,11 +129,11 @@ MegaBrain provides domain-specific utilities to enhance code quality and user ex
 
 - `megabrain.slice_ast_context`:
   Extracts precise AST subtrees and call graphs for targeted functions or classes, preventing context bloat.
-  - Arguments: `file_path` (string, required), `symbol_name` (string, optional)
+  - Arguments: `source_code` (string, optional), `target_name` (string, optional), `node_type` (string, optional), `language` (string, optional), `selectors` (array, optional)
 
 - `megabrain.arbitrate_concurrency`:
   Manages shared and exclusive resource locks across concurrent agents with Lamport logical clocks and TTL leases.
-  - Arguments: `resource` (string, required), `mode` (`"SHARED"` or `"EXCLUSIVE"`), `ttl_seconds` (number, optional)
+  - Arguments: `action` (`"ACQUIRE"` or `"RELEASE"`, optional), `workspace_id` (string, optional), `agent_id` (string, optional), `mode` (`"SHARED"` or `"EXCLUSIVE"`, optional), `paths` (array, optional), `lease_id` (string, optional), `ttl_seconds` (number, optional)
 
 ---
 
@@ -141,4 +149,4 @@ MegaBrain provides domain-specific utilities to enhance code quality and user ex
    Create a checkpoint (`megabrain.create_checkpoint`) before major refactoring or multi-file operations. If unexpected regressions occur, use `megabrain.rollback_checkpoint`.
 
 4. **Secret Hygiene**:
-   Pass authentication tokens via standard HTTP Authorization headers or environment variables. Never print tokens, credentials, or keys in conversation messages, logs, or commited files.
+   Pass authentication tokens via standard HTTP Authorization headers or environment variables. Never print tokens, credentials, or keys in conversation messages, logs, or committed files.
