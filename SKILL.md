@@ -1,131 +1,144 @@
 ---
 name: megabrain
-description: "MegaBrain sovereign MCP orchestration and dev harness."
-version: 2.1.0
-author: Luiz Franco (LuizKarlos), Hermes Agent
+description: "MegaBrain Sovereign Model Context Protocol (MCP) Orchestration Skill for AI harnesses and coding agents."
+version: 3.1.0
 license: MIT
-platforms: [linux, macos]
+platforms: [linux, macos, windows]
 metadata:
-  hermes:
-    tags: [megabrain, mcp, orchestration, cumulative, harness]
-    related_skills: [agile-jev-orchestrator-loop, canonical-pr-delivery-and-merge, hermes-agent]
+  tags: [mcp, orchestration, autonomous-agent, dag-pipeline, code-review]
 ---
 
-# MegaBrain Sovereign MCP Orchestration & Development Harness
+# MegaBrain Sovereign MCP Orchestration Skill
 
 ## Overview
-This skill governs the autonomous, verifiable orchestration of the **MegaBrain** sovereign platform via its native Model Context Protocol (MCP) server, multi-cycle cumulative development pipelines (`dev_mcp_v1` ... `dev_mcp_vN`), and fail-closed evidence sealing.
+This skill guides autonomous coding agents and AI assistants on how to connect to and interact with the **MegaBrain** Model Context Protocol (MCP) service.
 
-It incorporates all verified platform improvements through `dev_mcp_v5` (immutable delta identity, crash-atomic report publication, deterministic barrier concurrency, directory-level fsync durability, and post-link failure containment).
-
----
-
-## When to Use
-- Orchestrating tasks, audits, or pipelines through the running MegaBrain FastMCP server.
-- Executing cumulative multi-cycle development iterations (`dev_mcp_v1` -> `dev_mcp_vN`).
-- Running sealed test batteries, evidence collection, and two-track independent review loops.
-- Promoting verified development cycles into canonical pull requests and merges.
-- Do not use for: Direct ad-hoc edits on canonical repository `LuizKarlos/megabrain` without worktree isolation.
+MegaBrain provides an enterprise-grade orchestration core featuring DAG task decomposition, topological wave execution, automated verification test gates, AST context virtualization, and multi-reviewer consensus adjudication.
 
 ---
 
-## Core Invariants & Governance
+## Connecting to MegaBrain MCP
 
-1. **Canonical Repository Protection (MANDATORY)**:
-   - The canonical repository (`/srv/megabrain-dev/repository`, `LuizKarlos/megabrain`) is strictly read-only during development.
-   - Opening PRs (`gh pr create`) or merging (`gh pr merge`) on `LuizKarlos/megabrain` is strictly forbidden without express, prior, and unambiguous authorization from the user in the chat for that specific action.
-   - Development occurs exclusively in isolated Git worktrees and is published to replica repositories (`LuizKarlos/dev_mcp_v[k]`).
+### 1. Transport & Protocols
+MegaBrain supports streamable HTTP (and Server-Sent Events / SSE) over standard HTTP/HTTPS:
+- **Default Endpoint**: `POST /mcp` (e.g. `https://mcp.atlascommand.dev/mcp` or your self-hosted host).
+- **Headers**:
+  - `Content-Type: application/json`
+  - `Accept: application/json, text/event-stream`
+  - `Authorization: Bearer <SEU_TOKEN_MCP>`
 
-2. **Cumulative Chaining ($v_k \leftarrow v_{k-1}$)**:
-   - Version 1 ($v_1$) branches strictly from canonical `main`.
-   - Each subsequent version ($v_k, k > 1$) must branch directly from the preceding published replica (`dev_mcp_v[k-1]`). Never reset $v_k$ to canonical `main`.
-   - Every replica inherits 100% of accumulated code, schemas, and test suites.
-
-3. **FastMCP Transport & Single-Writer Mode**:
-   - Endpoint: Streamable HTTP at `POST /mcp` with `Accept: application/json, text/event-stream`.
-   - Streaming responses use SSE format (`data: {jsonrpc...}`). Clients must parse the `data: ` line.
-   - Dev daemons run on port 20140 with:
-     ```bash
-     MEGABRAIN_PORT=20140 MEGABRAIN_LIVE_DEPLOYMENT=1 MEGABRAIN_SINGLE_WRITER_MODE=1 python3 scripts/run_mcp_server.py
-     ```
-   - Process longevity: Daemons and Cloudflare tunnels must be launched with `persist_on_release=true` and `background=true`.
-   - Health vs. Ready:
-     - `/health` returns HTTP 200 `{"status": "HEALTHY"}`.
-     - In development workspaces lacking production release manifests, `/ready` returns HTTP 503 `{"errors": ["release_manifest_missing"]}`. This is normal and expected; the MCP tool `megabrain.health` returns `status: READY`.
-
-4. **Authentication & Token Isolation**:
-   - Operational auth token resides at `reports/auth/.current_orchestrator_token`.
-   - Requests include `Authorization: Bearer <token>`.
-   - Never commit `reports/auth/` to public git replicas. Never leak tokens or credentials in logs, diffs, or chat.
-
-5. **Proven Reviewer & Storage Invariants (Cumulative v1–v5)**:
-   - **v1**: Mandatory `delta_identity` (`base`, `head`, `diff_sha256`, `files_manifest`). Rejection if mismatch.
-   - **v2**: Crash-atomic publication via `tempfile.mkstemp(dir=reports_dir)` -> `flush()` -> `os.fsync(fileno)` -> `os.link(temp, target)`. Guaranteed cleanup via `finally: os.unlink(temp)`. Winning reviewer model preservation on idempotent re-runs.
-   - **v3**: Deterministic concurrency barrier testing (`Barrier(2)`), pre-publication failure containment, and certified stdout oracles (`TEMP_CLEANUP_ORACLE`, `CONCURRENT_LINK_ORACLE`).
-   - **v4**: Directory durability: `descritor = os.open(reports_dir, os.O_RDONLY)` followed by `os.fsync(descritor)` and `finally: os.close(descritor)` immediately after successful `os.link`. Certified via `DIRECTORY_FSYNC_ORACLE`.
-   - **v5**: Post-link failure containment: if directory `fsync` raises an `OSError`, the exception propagates cleanly, the already linked report remains fully intact and parseable on disk, and the descriptor is closed deterministically in `finally: os.close(descritor)`. Certified via `POST_LINK_FSYNC_FAILURE_ORACLE`.
-
-6. **Replica & Delivery Publishing Safeguards**:
-   - Always remove `.github/workflows/` before pushing replica repositories to avoid permission failures with tokens lacking the `workflow` scope.
-   - When global Git configuration rewrites HTTPS to SSH (`url.ssh://git@github.com/.insteadof`), push attempts default to SSH deploy keys and fail with permission denied. Isolate replica pushes using `GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1 git -c http.https://github.com/.extraheader="AUTHORIZATION: basic $AUTH" push -u origin <branch>` where `$AUTH` is `base64("x-access-token:" + gh auth token)`.
-   - Avoid force-deleting branches via forbidden deletion flags; clean up ephemeral worktrees using `git worktree remove --force <path>` followed by `git worktree prune`.
-   - When promoting a completed evolution to canonical `main`, never copy or push omitted workflow or package lockfiles from development replicas. Spawn an ephemeral delivery worktree anchored on canonical `main` (`FETCH_HEAD`), copy strictly the allowlisted functional files (`agents/...`, `tests/...`), verify `.github/workflows` has zero diff against canonical `main`, run `ci_pr.py` gates, and open the PR only upon explicit chat authorization.
-   - When designated reviewer models hit upstream usage quotas (HTTP 429 cooldown), strict governance forbids silent model swapping; use `clarify` to prompt the user for waiting or explicit substitution.
+### 2. Tool Naming Conventions
+All MegaBrain tools are published with two equivalent naming formats for maximum harness compatibility:
+- **Canonical dot notation**: `megabrain.<tool>` (e.g. `megabrain.health`, `megabrain.decompose`)
+- **Underscore notation**: `megabrain_<tool>` (for clients restricting tool names to `^[a-zA-Z0-9_-]+$`)
 
 ---
 
-## 37 Canonical MCP Tools
+## Core Orchestration Workflow
 
-All tools are accessible via `megabrain.<tool>` and `megabrain_<tool>`. See `references/mcp-catalog.md` for complete schema details.
+When orchestrating complex features, refactoring, or multi-step engineering tasks, follow this sequence:
 
-Essential orchestration workflows:
-1. `megabrain.health`: Pre-flight operational readiness check.
-2. `megabrain.refine_prompt`: Validates input and extracts strict file allowlists.
-3. `megabrain.decompose`: Creates DAG `WorkRecord`, topological order, and parallel waves.
-4. `megabrain.dispatch_subtask`: Prepares minimal ephemeral context bundle for workers.
-5. `megabrain.verify_subtask`: Validates worker execution against strict GREEN gates.
-6. `megabrain.execute_pipeline`: Traverses DAG tasks in topological waves with Ed25519 cryptographic attestation.
-7. `megabrain.export_evidence_pack`: Compiles verifiable cryptographic evidence.
+### Step 1: Pre-flight Health Check
+Verify server availability, readiness, and active tool capabilities.
+- **Tool**: `megabrain.health`
+- **Arguments**: `{}`
+- **Expected Output**: Status `READY` or `HEALTHY`.
+
+### Step 2: Contract & Requirement Refinement
+Transform unstructured user requests into formal execution contracts with clear file allowlists and acceptance criteria.
+- **Tool**: `megabrain.refine_prompt`
+- **Arguments**:
+  - `prompt` (string, required): The user task or engineering objective.
+  - `repo_path` (string, optional): Target workspace path (default: `"."`).
+- **Outcome**: Bounded contract with explicit file scopes and execution constraints.
+
+### Step 3: DAG Task Decomposition
+Decompose the objective into an acyclic directed graph (DAG) of atomic, verifiable subtasks.
+- **Tool**: `megabrain.decompose`
+- **Arguments**:
+  - `goal` (string, required): The high-level engineering goal.
+  - `contract` (object or string, optional): Refined contract from Step 2.
+- **Outcome**: A `WorkRecord` containing topological waves of mutually independent tasks.
+
+### Step 4: Ephemeral Subtask Dispatch
+Prepare minimal, isolated context packages for each ready subtask.
+- **Tool**: `megabrain.dispatch_subtask`
+- **Arguments**:
+  - `work_id` (string, required): Active WorkRecord identifier.
+  - `subtask_id` (string, required): Target subtask identifier.
+- **Outcome**: Ephemeral context bundle containing only the relevant code slices and requirements.
+
+### Step 5: Subtask Verification Gate
+Validate worker outputs against strict deterministic verification criteria before accepting changes.
+- **Tool**: `megabrain.verify_subtask`
+- **Arguments**:
+  - `work_id` (string, required): Active WorkRecord identifier.
+  - `subtask_id` (string, required): Executed subtask identifier.
+  - `test_command` (string, optional): Test command to execute and verify.
+- **Outcome**: Verification receipt confirming green status.
+
+### Step 6: Pipeline Execution & Topological Traversal
+Execute or step through DAG waves sequentially while running ready tasks within each wave in parallel.
+- **Tool**: `megabrain.execute_pipeline`
+- **Arguments**:
+  - `work_id` (string, required): Active WorkRecord identifier.
+  - `max_parallel` (integer, optional): Maximum concurrent tasks per wave.
+- **Outcome**: Progress notifications and execution receipts per wave.
+
+### Step 7: Multi-Reviewer Consensus Adjudication
+For critical changes, run independent adversarial reviews and compute weighted consensus.
+- **Tool**: `megabrain.adjudicate_consensus`
+- **Arguments**:
+  - `work_id` (string, required): WorkRecord under evaluation.
+  - `reviewers` (array, required): Review payloads or reviewer evaluations.
+  - `threshold` (number, optional): Minimum acceptance threshold (default: `0.8`).
+- **Outcome**: Consolidated verdict (`MVP_GO` / `MVP_NO_GO`, `SECURITY_GO` / `SECURITY_NO_GO`).
+
+### Step 8: Cryptographic Evidence Export
+Generate an audit trail of the entire execution.
+- **Tool**: `megabrain.export_evidence_pack`
+- **Arguments**:
+  - `work_id` (string, required): Completed WorkRecord identifier.
+- **Outcome**: Verifiable audit ledger and evidence summary.
 
 ---
 
-## Agile Jev Delivery Loop
+## Specialized Quality & Analysis Tools
 
-For each development unit/part:
-1. **Preflight**: Jev selects bounded transition (`continue`, `change_approach`, etc.).
-2. **Read-Only Triad**: Dispatch 3 parallel read-only subagents:
-   - `PESQUISADOR_DE_PROBES`: identifies adversarial attack classes and invariants.
-   - `INVENTARIADOR_DE_FIXTURES`: inventories existing tests, gaps, and reusable controls.
-   - `PREPARADOR_DA_PRÓXIMA_SPRINT`: calculates line ranges, ceiling, and runner spec.
-3. **Consolidation**: Orchestrator consolidates a single property card with explicit allowlist and ceiling.
-4. **RED Stage**: Implementer writes failing test with observable stable stdout oracle. Operator runs spec via `scripts/operator_runner.py`. Observer certifies failure provenance.
-5. **GREEN Stage**: Implementer applies minimal production fix. Operator runs focused spec. Observer certifies green test and stdout oracles.
-6. **Final Battery**: Operator runs comprehensive gates (`diff --check`, `py_compile`, focused test, `scripts/ci_pr.py matrix`). Observer certifies all stages.
-7. **Independent Review**: Designated reviewer model evaluates 100% of diff read-only with dual tracks:
-   - **MVP/Harness Track**: `MVP_GO` or `MVP_NO_GO`.
-   - **Hardening Track**: `SECURITY_GO` or `SECURITY_NO_GO`.
-8. **Promotion & Telemetry**: Worktree is committed, replica is published, Cloudflare tunnel verified, and issue is commented.
+MegaBrain provides domain-specific utilities to enhance code quality and user experience:
 
----
+- `megabrain.dom_audit`:
+  Audits HTML markup for semantic hierarchy (`h1` -> `h2` -> `h3`), image alt attributes, interactive element affordances, and WCAG 2.1 AA accessibility compliance.
+  - Arguments: `html_content` (string, required)
 
-## Mandatory Pipeline Report Format
+- `megabrain.css_validator`:
+  Validates stylesheet syntax, unclosed braces, vendor prefix sanity, and layout integrity.
+  - Arguments: `css_content` (string, required)
 
-Pipeline updates must conform strictly to the 4-topic format (max 5 lines, no introductory or concluding filler):
+- `megabrain.anti_slop_lint`:
+  Scans generated copy and user-facing messages against artificial AI cliché patterns, robotic transition phrases, and empty filler to ensure humanized communication.
+  - Arguments: `text` (string, required)
 
-```text
-[Esteira Issue #<N> | Parte <X>/<Y> | Etapa <E>/12]
-- Fazendo isso, fazemos: <capacidade inaugurada ou objetivo direto>
-- Corrigido: <o que acabou de ser resolvido no ciclo>
-- Auditor avaliou: <vereditos MVP_GO/SECURITY_GO e status CI>
-- Implementador vai trabalhar: <próxima etapa objetiva>
-```
+- `megabrain.slice_ast_context`:
+  Extracts precise AST subtrees and call graphs for targeted functions or classes, preventing context bloat.
+  - Arguments: `file_path` (string, required), `symbol_name` (string, optional)
+
+- `megabrain.arbitrate_concurrency`:
+  Manages shared and exclusive resource locks across concurrent agents with Lamport logical clocks and TTL leases.
+  - Arguments: `resource` (string, required), `mode` (`"SHARED"` or `"EXCLUSIVE"`), `ttl_seconds` (number, optional)
 
 ---
 
-## Verification
-To verify compliance with this skill:
-1. Confirm replica is cumulative from $v_{k-1}$ (`git log` shows inherited commits).
-2. Confirm `.github/workflows` is absent before replica push, and preserved byte-for-byte in canonical delivery PRs.
-3. Confirm sealed operator logs (`.log` and `.done.json`) exist with matching `TEST_ID`.
-4. Confirm independent reviewer output contains dual verdicts and 100% delta coverage.
-5. Confirm no uncommitted or modified files exist on canonical repository `/srv/megabrain-dev/repository`.
+## Best Practices for AI Agents
+
+1. **Fail-Closed Verification**:
+   Never assume an edit or patch succeeded without validating against a concrete test or DOM/CSS audit. If a gate fails, halt and diagnose rather than proceeding blindly.
+
+2. **Context Economy**:
+   Use `megabrain.slice_ast_context` and minimal ephemeral context bundles rather than loading full repositories into the prompt.
+
+3. **Safe State Rollbacks**:
+   Create a checkpoint (`megabrain.create_checkpoint`) before major refactoring or multi-file operations. If unexpected regressions occur, use `megabrain.rollback_checkpoint`.
+
+4. **Secret Hygiene**:
+   Pass authentication tokens via standard HTTP Authorization headers or environment variables. Never print tokens, credentials, or keys in conversation messages, logs, or commited files.
