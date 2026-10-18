@@ -10,7 +10,7 @@ Canonical operational skill for interacting with the sovereign **MegaBrain** Mod
 
 ### Hermes Agent
 ```bash
-hermes skill add LuizKarlos/megabrain-mcp-skill
+mkdir -p ~/.hermes/skills/megabrain && curl -fsSL "https://raw.githubusercontent.com/LuizKarlos/megabrain-mcp-skill/main/SKILL.md" -o ~/.hermes/skills/megabrain/SKILL.md
 ```
 
 ### Claude Desktop
