@@ -282,3 +282,26 @@ test('4. Codigos de saida de erro quando argumentos invalidos sao passados', asy
   assert.equal(r4.status, 1, 'status with invalid endpoint URL should exit with code 1');
   assert.match(r4.stderr, /Invalid URL/);
 });
+
+test('5. Suporte nativo a .env local no CLI sem dependencias externas', async () => {
+  if (typeof process.loadEnvFile !== 'function') return;
+  const tmpDir = path.join(os.tmpdir(), `mb-env-${Date.now()}`);
+  fs.mkdirSync(tmpDir, { recursive: true });
+  fs.writeFileSync(path.join(tmpDir, '.env'), 'MEGABRAIN_ENDPOINT=https://custom-test.local/mcp\n');
+  try {
+    const res = await new Promise((resolve) => {
+      const env = { ...process.env, NODE_OPTIONS: '--import data:text/javascript,globalThis.fetch=async()=>new%20Response(JSON.stringify({status:%22ok%22}))' };
+      delete env.MEGABRAIN_ENDPOINT;
+      delete env.MEGABRAIN_TOKEN;
+      const child = spawn(process.execPath, [binPath, 'status', '--json'], { env, cwd: tmpDir });
+      let stdout = '';
+      child.stdout.on('data', d => { stdout += d; });
+      child.on('close', code => resolve({ status: code, stdout }));
+    });
+    assert.equal(res.status, 0);
+    const parsed = JSON.parse(res.stdout || '{}');
+    assert.equal(parsed.endpoint, 'https://custom-test.local/mcp');
+  } finally {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  }
+});

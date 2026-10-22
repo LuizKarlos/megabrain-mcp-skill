@@ -3,6 +3,10 @@ import { parseArgs } from 'node:util';
 import { existsSync, readFileSync } from 'node:fs';
 import process from 'node:process';
 
+if (typeof process.loadEnvFile === 'function' && existsSync('.env')) {
+  try { process.loadEnvFile(); } catch {}
+}
+
 const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 
 const { values: flags, positionals } = parseArgs({
