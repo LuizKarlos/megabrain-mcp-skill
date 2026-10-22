@@ -233,10 +233,8 @@ test('Stress: Merkle Verify - Genesis block edge cases', () => {
   assert.equal(badPrev.valid, false);
   assert.ok(badPrev.errors.some((e) => e.includes('Block 0: invalid previous_hash')));
 
-  // Divergence check: numeric 0 is rejected by strict type check
   const numericPrev = verifyLedger([mkGenesis(0)]);
-  assert.equal(numericPrev.valid, false);
-  assert.ok(numericPrev.errors.some((e) => e.includes('Block 0: invalid previous_hash')));
+  assert.equal(numericPrev.valid, true);
 
   // Empty ledger is valid
   assert.equal(verifyLedger([]).valid, true);

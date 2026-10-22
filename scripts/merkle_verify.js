@@ -26,7 +26,7 @@ export function verifyLedger(blocks) {
 
   const errors = [];
   const isGenesisPrevValid = (prev) =>
-    prev === null || prev === undefined || prev === '0' || prev === '' ||
+    prev === null || prev === undefined || prev === 0 || prev === '0' || prev === '' ||
     (typeof prev === 'string' && /^[0-9a-fA-F]{64}$/.test(prev));
 
   for (let i = 0; i < list.length; i++) {
