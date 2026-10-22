@@ -21,5 +21,17 @@
     "cli"
   ],
   "license": "MIT",
-  "dependencies": {}
+  "dependencies": {},
+  "files": [
+    "bin",
+    "src",
+    "scripts",
+    "megabrain-orchestrate",
+    "megabrain-pipeline",
+    "megabrain-review",
+    "megabrain-audit",
+    "megabrain-context",
+    "megabrain-ui",
+    "README.md"
+  ]
 }
