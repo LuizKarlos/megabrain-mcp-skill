@@ -6,10 +6,11 @@ import process from 'node:process';
 
 // ponytail: in-memory Kahn algorithm; upgrade to streaming DAG for 100k+ nodes
 export function validateDAG(tasks = []) {
-  if (!Array.isArray(tasks)) return { valid: false, cycles: [], waves: [] };
+  if (!Array.isArray(tasks)) return { valid: false, cycles: [], missing_dependencies: [], waves: [] };
 
   const inDegree = new Map();
   const dependents = new Map();
+  const knownIds = new Set(tasks.map((t) => t.id)), missing_dependencies = [];
 
   for (const t of tasks) {
     inDegree.set(t.id, 0);
@@ -17,11 +18,9 @@ export function validateDAG(tasks = []) {
   }
 
   for (const t of tasks) {
-    const deps = [...new Set(t.depends_on || [])];
-    inDegree.set(t.id, deps.length);
-    for (const dep of deps) {
-      if (!dependents.has(dep)) dependents.set(dep, []);
-      dependents.get(dep).push(t.id);
+    for (const dep of new Set(t.depends_on || [])) {
+      if (!knownIds.has(dep)) { if (!missing_dependencies.includes(dep)) missing_dependencies.push(dep); }
+      else { inDegree.set(t.id, inDegree.get(t.id) + 1); dependents.get(dep).push(t.id); }
     }
   }
 
@@ -46,10 +45,10 @@ export function validateDAG(tasks = []) {
     currentWave = nextWave;
   }
 
-  const valid = processed === tasks.length;
+  const valid = processed === tasks.length && missing_dependencies.length === 0;
   const cycles = valid ? [] : tasks.filter((t) => (inDegree.get(t.id) || 0) > 0).map((t) => t.id);
 
-  return { valid, cycles, waves };
+  return { valid, cycles, missing_dependencies, waves };
 }
 
 export default validateDAG;

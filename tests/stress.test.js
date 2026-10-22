@@ -123,6 +123,13 @@ test('Stress: DAG Validator - Complex cycles in 50 nodes', () => {
   assert.equal(resSelf.valid, false);
   assert.deepEqual(resSelf.cycles, ['loop']);
   assert.equal(resSelf.waves.length, 1);
+  const resMissing = validateDAG([
+    { id: 't1', depends_on: [] },
+    { id: 't2', depends_on: ['t1', 'inexistent_task'] },
+  ]);
+  assert.equal(resMissing.valid, false);
+  assert.deepEqual(resMissing.missing_dependencies, ['inexistent_task']);
+  assert.deepEqual(resMissing.cycles, []);
 });
 
 test('Stress: DAG Validator - CLI file execution', () => {
