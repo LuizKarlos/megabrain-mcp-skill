@@ -12,7 +12,7 @@ export async function run({ positionals = [], flags = {} }) {
       throw new Error(`Invalid JSON arguments: ${e.message}`);
     }
   }
-  const result = await callTool(name, args, { endpoint: flags.endpoint });
+  const result = await callTool(name, args, { endpoint: flags.endpoint, token: flags.token });
   if (flags.json) {
     console.log(JSON.stringify(result));
   } else {

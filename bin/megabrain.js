@@ -10,10 +10,7 @@ const { values: flags, positionals } = parseArgs({
   options: {
     wait: { type: 'boolean' },
     json: { type: 'boolean' },
-    endpoint: {
-      type: 'string',
-      default: process.env.MEGABRAIN_ENDPOINT || 'https://mcp.atlascommand.dev/mcp',
-    },
+    endpoint: { type: 'string' },
     token: { type: 'string' },
     help: { type: 'boolean', short: 'h' },
     version: { type: 'boolean', short: 'v' },

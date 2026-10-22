@@ -4,7 +4,7 @@ import { getEndpoint } from "../config.js";
 // ponytail: unary health ping; upgrade to full telemetry snapshot when dashboard ready
 export async function run({ flags = {} }) {
   const endpoint = flags.endpoint || getEndpoint();
-  const health = await checkHealth({ endpoint });
+  const health = await checkHealth({ endpoint, token: flags.token });
   const out = { endpoint, status: health?.status || "ok", health };
   if (flags.json) {
     console.log(JSON.stringify(out));
