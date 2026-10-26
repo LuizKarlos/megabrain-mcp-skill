@@ -136,9 +136,8 @@ test('2. Chamadas de bin/megabrain.js com --version, --help, status --json, call
     const cRes = await runCliAsync([
       'call', 'megabrain_health', '{}',
       '--endpoint', mockEndpoint,
-      '--token', 'secret-agent-token',
       '--json'
-    ]);
+    ], { MEGABRAIN_TOKEN: 'secret-agent-token' });
     assert.equal(cRes.status, 0);
     const parsedCall = JSON.parse(cRes.stdout);
     assert.equal(parsedCall.tool, 'megabrain_health');
@@ -241,24 +240,22 @@ test('3. Fallback e prioridade de variaveis de ambiente MEGABRAIN_TOKEN e MEGABR
     assert.equal(c2.status, 0);
     assert.equal(lastAuth, 'Bearer token-from-env', 'MEGABRAIN_TOKEN must override credentials.json token');
 
-    // Caso 3: Flag --token setada -> deve sobrepor Env var e arquivo
-    lastAuth = null;
+    // Caso 3: Flag --token rejeitada
     const c3 = await runCliAsync(['call', 'test', '{}', '--endpoint', mockEndpoint, '--token', 'token-from-flag', '--json'], {
       ...envDefaults,
       MEGABRAIN_TOKEN: 'token-from-env',
     });
-    assert.equal(c3.status, 0);
-    assert.equal(lastAuth, 'Bearer token-from-flag', '--token flag must override MEGABRAIN_TOKEN and file');
+    assert.equal(c3.status, 1);
+    assert.ok(!c3.stderr.includes('token-from-flag'));
 
     // 3c. Preservacao de endpoint customizado durante login sem --endpoint
-    const l1 = await runCliAsync(['login', 'another-token', '--json'], {
-      ...envDefaults,
-      MEGABRAIN_ENDPOINT: '',
-    });
+    const l1 = await runCliAsync(['login', '--json'], { ...envDefaults, MEGABRAIN_TOKEN: 'another-token', MEGABRAIN_ENDPOINT: '' });
     assert.equal(l1.status, 0);
     const credContent = JSON.parse(fs.readFileSync(path.join(cDir, 'credentials.json'), 'utf8'));
     assert.equal(credContent.token, 'another-token');
     assert.equal(credContent.endpoint, fileEndpoint, 'login command without --endpoint must NOT clobber custom endpoint');
+    const noTok = await runCliAsync(['login'], { ...envDefaults, MEGABRAIN_TOKEN: '', XDG_CONFIG_HOME: path.join(tmpDir, 'nc') });
+    assert.ok(noTok.status === 1 && !fs.existsSync(path.join(tmpDir, 'nc')));
   } finally {
     server.close();
     fs.rmSync(tmpDir, { recursive: true, force: true });
@@ -303,5 +300,22 @@ test('5. Suporte nativo a .env local no CLI sem dependencias externas', async ()
     assert.equal(parsed.endpoint, 'https://custom-test.local/mcp');
   } finally {
     fs.rmSync(tmpDir, { recursive: true, force: true });
+  }
+});
+
+test('6. setup --write-mcp grava megabrain.mcp.json sem token plaintext', async () => {
+  const tmp = path.join(os.tmpdir(), `mb-setup-${Date.now()}`);
+  const cfg = path.join(tmp, 'megabrain.mcp.json');
+  try {
+    const r1 = await runCliAsync(['setup', '--dest', tmp, '--endpoint', 'http://127.0.0.1:65534', '--json'], { MEGABRAIN_TOKEN: 'sec1' });
+    assert.equal(fs.existsSync(cfg), false);
+    const r2 = await runCliAsync(['setup', '--dest', tmp, '--write-mcp', '--endpoint', 'http://127.0.0.1:65534', '--json'], { MEGABRAIN_TOKEN: 'sec1' });
+    assert.equal(fs.existsSync(cfg), true);
+    const data = JSON.parse(fs.readFileSync(cfg, 'utf8'));
+    assert.equal(data.mcpServers.megabrain.url, 'http://127.0.0.1:65534');
+    assert.equal(data.mcpServers.megabrain.headers.Authorization, 'Bearer ${MEGABRAIN_TOKEN}');
+    assert.ok(!r1.stdout.includes('sec1') && !r2.stdout.includes('sec1') && !JSON.stringify(data).includes('sec1'));
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
   }
 });

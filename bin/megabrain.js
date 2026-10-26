@@ -15,13 +15,13 @@ const { values: flags, positionals } = parseArgs({
     wait: { type: 'boolean' },
     json: { type: 'boolean' },
     endpoint: { type: 'string' },
-    token: { type: 'string' },
     help: { type: 'boolean', short: 'h' },
     version: { type: 'boolean', short: 'v' },
   },
   allowPositionals: true,
   strict: false,
 });
+if (flags.token !== undefined) { console.error('--token is not supported'); process.exit(1); }
 
 const command = positionals[0];
 
@@ -49,8 +49,7 @@ Options:
   -v, --version    Show version
   --wait           Wait for execution completion
   --json           Output results in JSON format
-  --endpoint <url> MCP server endpoint (default: $MEGABRAIN_ENDPOINT or https://mcp.atlascommand.dev/mcp)
-  --token <token>  Authentication token`);
+  --endpoint <url> MCP server endpoint (default: $MEGABRAIN_ENDPOINT or https://mcp.atlascommand.dev/mcp)`);
   process.exit(0);
 }
 
