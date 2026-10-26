@@ -17,12 +17,12 @@ const SKILLS = [
 // ponytail: synchronous copy and unary probe; upgrade to async workers when syncing >50 skills
 export async function run({ positionals = [], flags = {} } = {}) {
   if (flags?.help) {
-    console.log("Usage: megabrain setup [--dest <path>] [--endpoint <url>] [--token <token>] [--json]");
+    console.log("Usage: megabrain setup [--dest <path>] [--endpoint <url>] [--json]");
     return;
   }
 
   const endpoint = flags?.endpoint || getEndpoint();
-  const token = flags?.token !== undefined ? flags.token : getToken();
+  const token = getToken();
   const rootDir = fileURLToPath(new URL("../../", import.meta.url));
   const destArg = typeof flags?.dest === "string" ? flags.dest : (positionals[0] || null);
   const destDir = destArg || path.join(process.cwd(), ".agents", "skills");
@@ -52,10 +52,11 @@ export async function run({ positionals = [], flags = {} } = {}) {
     mcpServers: {
       megabrain: {
         url: endpoint,
-        headers: token ? { Authorization: `Bearer ${token}` } : {}
+        headers: token ? { Authorization: "Bearer ${MEGABRAIN_TOKEN}" } : {}
       }
     }
   };
+  if (flags?.["write-mcp"] || flags?.writeMcp) fs.writeFileSync(path.join(destDir, "megabrain.mcp.json"), JSON.stringify(mcpConfig, null, 2) + "\n");
 
   const nodeMajor = parseInt(process.versions.node.split(".")[0], 10);
   const nodeOk = nodeMajor >= 18;
