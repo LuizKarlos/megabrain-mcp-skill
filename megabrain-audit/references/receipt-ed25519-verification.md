@@ -20,5 +20,7 @@ Verification receipts encapsulate signature metadata within a canonical envelope
 Consumers validate signatures offline or at runtime prior to merging code or advancing pipeline waves.
 
 ```bash
-megabrain call verify_subtask --work_id "wrk_01" --task_id "tsk_01" --test_result '{"status":"GREEN","exit_code":0}'
+megabrain call megabrain.verify_subtask '{"work_id":"work_local_1","task_id":"t1","test_result":{"status":"GREEN","exit_code":0}}'
 ```
+
+Envelope/receipts seguem o schema real. Presença de referência ou campo `signature` não prova Ed25519. Root ou assinatura que não verifica não é aprovada.

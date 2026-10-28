@@ -28,6 +28,8 @@ INIT ──> RUNNING ──┬──> CHECKPOINT ──> RUNNING
    - Appends signed rollback event to audit ledger.
 
 ```bash
-megabrain call create_checkpoint --work_id "wrk_01" --label "pre-patch"
-megabrain call rollback_checkpoint --work_id "wrk_01" --checkpoint_id "chk_01"
+megabrain call megabrain.create_checkpoint '{"work_id":"work_local_1","label":"pre-patch"}'
+megabrain call megabrain.rollback_checkpoint '{"work_id":"work_local_1","checkpoint_id":"pre-patch"}'
 ```
+
+`orchestrate` exige `prompt`, `idempotency_key` e `workspace_root`. Mock/parser não é prova live. Sem checkpoint persistido, `inspect` devolve MISSION_NOT_FOUND.

@@ -18,6 +18,8 @@ When a subtask fails deterministic test gates (`verify_subtask`):
 4. **Retry Budgeting**: Bounded to $N$ attempts (default: 2); transitions to fail-closed or skipped on exhaustion.
 
 ```bash
-megabrain call heal_dependency_graph --work_id "wrk_01"
-megabrain call synthesize_subtask --work_id "wrk_01" --parent_id "task_02" --role "implementer"
+megabrain call megabrain.heal_dependency_graph '{"work_id":"work_local_1","tasks":[{"id":"t1","status":"BLOCKED"}],"canary":true}'
+megabrain call megabrain.synthesize_subtask '{"work_id":"work_local_1","parent_id":"t1","role":"implementer"}'
 ```
+
+Cura reconhecida, opção canário e estado terminal. Sem executor o kernel devolve NOT_EXECUTED, nunca SUCCESS falso. Sem execução de provider.

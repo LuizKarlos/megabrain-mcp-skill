@@ -16,7 +16,7 @@ export function sliceAst(code = '', lang = 'auto') {
   const isPy = detected === 'py';
   const startRe = isPy ? /^[ \t]*(?:class\s+\w+|(?:async\s+)?def\s+\w+)/ : /^[ \t]*(?:export\b|(?:async\s+)?function\*?\b|class\b|interface\b|type\b)/;
   const pyMatch = /^([ \t]*(?:class\s+\w+(?:\([^)]*\))?|(?:async\s+)?def\s+[\w$]+\s*\([^)]*\)\s*(?:->\s*[^:]+)?)\s*:)/;
-  const cleanJs = (s) => (/^[ \t]*export\s*\{/.test(s) ? s.trim() : s.replace(/\s*\{.*\}\s*;?$/, '').replace(/\s*\{.*$/, '').trim());
+  const cleanJs = (s) => (/^[ \t]*(?:export\s+)?interface\b/.test(s) || /^[ \t]*export\s*\{/.test(s) ? s.trim() : s.replace(/\s*\{.*\}\s*;?$/, '').replace(/\s*\{.*$/, '').trim());
 
   for (const line of code.split('\n')) {
     const trimmed = line.trim();

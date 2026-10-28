@@ -24,21 +24,20 @@ Decompose tasks into DAGs, execute topological waves, and auto-heal execution de
 
 ## Workflow & CLI
 
-Execute via `megabrain call` or `npx @megabrain/cli call`:
+Execute via `megabrain call` com nome qualificado e JSON objeto. O parser rejeita JSON que não seja objeto.
 
 ```bash
-# 1. Decompose task into DAG
-megabrain call decompose '{"task": "Implement feature", "max_depth": 3}'
+# 1. Decompose: prompt obrigatório; tasks opcional. Sem profundidade máxima.
+megabrain call megabrain.decompose '{"prompt":"Analyze local DAG","tasks":[{"id":"t1","title":"plan","category":"PLANNING","dependencies":[]}]}'
 
-# 2. Validate DAG acyclicity and compute waves
-node scripts/dag_validator.js tasks.json
-megabrain call get_parallel_waves '{"work_id": "wrk_01"}'
+# 2. Waves a partir do work_id já criado. Mock/parser não é prova live.
+megabrain call megabrain.get_parallel_waves '{"work_id":"work_local_1"}'
 
-# 3. Execute pipeline wave
-megabrain call execute_pipeline '{"work_id": "wrk_01", "wave_index": 0}'
+# 3. execute_pipeline exige test_commands verificados pelo harness. Sem índice de wave. Sem provider.
+megabrain call megabrain.execute_pipeline '{"work_id":"work_local_1","test_commands":{"t1":{"command":"node --test tests/issue351_docs_pipeline.test.js"}},"auto_heal":false}'
 
-# 4. Auto-heal blocked dependencies on failure
-megabrain call heal_dependency_graph '{"work_id": "wrk_01"}'
+# 4. heal usa tasks/catálogo. Cura reconhecida, opção canário e estado terminal. Sem execução de provider.
+megabrain call megabrain.heal_dependency_graph '{"work_id":"work_local_1","tasks":[{"id":"t1","status":"BLOCKED"}],"canary":true}'
 ```
 
 ## UX & Fault Tolerance Rules

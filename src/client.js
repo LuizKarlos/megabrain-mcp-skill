@@ -14,6 +14,10 @@ async function sendRpc(method, params = {}, options = {}) {
     ...options.headers
   };
   if (!headers["Authorization"]) delete headers["Authorization"];
+  headers["MCP-Protocol-Version"] = "2026-07-28";
+  headers["Mcp-Method"] = method;
+  if (method === "tools/call" && params.name) headers["Mcp-Name"] = params.name;
+  params._meta = { ...(params._meta || {}), "io.modelcontextprotocol/protocolVersion": "2026-07-28" };
 
   const res = await fetch(endpoint, {
     method: "POST",
@@ -76,5 +80,5 @@ export async function checkHealth(options = {}) {
   } catch {
     // fallback to tool/ping if /health route is unreachable
   }
-  return callTool("megabrain_health", {}, options);
+  return callTool("megabrain.health", {}, options);
 }

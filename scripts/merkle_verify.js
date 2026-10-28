@@ -21,13 +21,17 @@ export function computeBlockHash(block) {
 
 export function verifyLedger(blocks) {
   const list = Array.isArray(blocks) ? blocks : (Array.isArray(blocks?.blocks) ? blocks.blocks : null);
+  if (blocks && typeof blocks === 'object' && !Array.isArray(blocks) &&
+      ('merkle_root' in blocks || 'signature' in blocks || 'certificate' in blocks)) {
+    return { valid: false, blocks_verified: 0, errors: ['Unsupported envelope: merkle_root/signature/certificate are outside the linear chain contract'] };
+  }
   if (!list) return { valid: false, blocks_verified: 0, errors: ['Ledger must be an array of blocks'] };
   if (list.length === 0) return { valid: true, blocks_verified: 0, errors: [] };
 
   const errors = [];
   const isGenesisPrevValid = (prev) =>
     prev === null || prev === undefined || prev === 0 || prev === '0' || prev === '' ||
-    (typeof prev === 'string' && /^[0-9a-fA-F]{64}$/.test(prev));
+    (typeof prev === 'string' && /^0{64}$/.test(prev));
 
   for (let i = 0; i < list.length; i++) {
     const block = list[i];
@@ -37,10 +41,16 @@ export function verifyLedger(blocks) {
     }
 
     if (i === 0) {
+      if (Number(block.index) !== 0) {
+        errors.push('Block 0: genesis index must be 0');
+      }
       if (!isGenesisPrevValid(block.previous_hash)) {
         errors.push(`Block 0: invalid previous_hash (${block.previous_hash})`);
       }
     } else {
+      if (Number(block.index) !== i) {
+        errors.push(`Block ${i}: index sequence mismatch`);
+      }
       const prevHash = list[i - 1]?.hash;
       if (block.previous_hash !== prevHash) {
         errors.push(`Block ${i}: previous_hash mismatch (expected ${prevHash}, got ${block.previous_hash})`);

@@ -8,6 +8,15 @@ import process from 'node:process';
 export function validateDAG(tasks = []) {
   if (!Array.isArray(tasks)) return { valid: false, cycles: [], missing_dependencies: [], waves: [] };
 
+  const seenIds = new Set();
+  for (const t of tasks) {
+    const id = t ? t.id : undefined;
+    const idOk = (typeof id === 'string' && id.length > 0) || (typeof id === 'number' && Number.isFinite(id));
+    if (!idOk) return { valid: false, cycles: [], missing_dependencies: [], waves: [], error: 'INVALID_ID' };
+    if (seenIds.has(id)) return { valid: false, cycles: [], missing_dependencies: [], waves: [], error: 'DUPLICATE_ID' };
+    seenIds.add(id);
+  }
+
   const inDegree = new Map();
   const dependents = new Map();
   const knownIds = new Set(tasks.map((t) => t.id)), missing_dependencies = [];

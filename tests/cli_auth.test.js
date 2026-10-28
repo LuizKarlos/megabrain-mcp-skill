@@ -65,7 +65,7 @@ test('1. Permissoes de arquivo credentials.json (0600) e diretorio (0700)', asyn
   }
 });
 
-test('2. Chamadas de bin/megabrain.js com --version, --help, status --json, call megabrain_health', async () => {
+test('2. Chamadas de bin/megabrain.js com --version, --help, status --json, call megabrain.health', async () => {
   // --version, -v, version
   const v1 = await runCliAsync(['--version']);
   assert.equal(v1.status, 0);
@@ -124,6 +124,20 @@ test('2. Chamadas de bin/megabrain.js com --version, --help, status --json, call
   await new Promise(r => server.listen(0, '127.0.0.1', r));
   const port = server.address().port;
   const mockEndpoint = `http://127.0.0.1:${port}/mcp`;
+  const fbCalls = [];
+  const fbServer = http.createServer((req, res) => {
+    if (req.url !== '/mcp') { res.writeHead(404); res.end(); return; }
+    let body = '';
+    req.on('data', c => { body += c; });
+    req.on('end', () => {
+      const p = JSON.parse(body);
+      fbCalls.push({ tool: p.params?.name, auth: req.headers.authorization });
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ jsonrpc: '2.0', id: p.id, result: { tool: p.params?.name, status: 'ok', receivedAuth: req.headers.authorization } }));
+    });
+  });
+  await new Promise(r => fbServer.listen(0, '127.0.0.1', r));
+  const fbEndpoint = `http://127.0.0.1:${fbServer.address().port}/mcp`;
 
   try {
     const sRes = await runCliAsync(['status', '--json', '--endpoint', mockEndpoint]);
@@ -133,18 +147,26 @@ test('2. Chamadas de bin/megabrain.js com --version, --help, status --json, call
     assert.equal(parsedStatus.status, 'HEALTHY');
     assert.equal(parsedStatus.health.mock, true);
 
+    const fRes = await runCliAsync(['status', '--json', '--endpoint', fbEndpoint], { MEGABRAIN_TOKEN: 'secret-agent-token' });
+    assert.equal(fRes.status, 0);
+    JSON.parse(fRes.stdout);
+    const healthCall = fbCalls.find(c => c.tool === 'megabrain.health');
+    assert.ok(healthCall, 'fallback must call canonical megabrain.health');
+    assert.equal(healthCall.auth, 'Bearer secret-agent-token');
+
     const cRes = await runCliAsync([
-      'call', 'megabrain_health', '{}',
+      'call', 'megabrain.health', '{}',
       '--endpoint', mockEndpoint,
       '--json'
     ], { MEGABRAIN_TOKEN: 'secret-agent-token' });
     assert.equal(cRes.status, 0);
     const parsedCall = JSON.parse(cRes.stdout);
-    assert.equal(parsedCall.tool, 'megabrain_health');
+    assert.equal(parsedCall.tool, 'megabrain.health');
     assert.equal(parsedCall.status, 'ok');
     assert.equal(parsedCall.receivedAuth, 'Bearer secret-agent-token');
   } finally {
     server.close();
+    fbServer.close();
   }
 });
 
@@ -224,7 +246,7 @@ test('3. Fallback e prioridade de variaveis de ambiente MEGABRAIN_TOKEN e MEGABR
     // 3b. Prioridade de Token:
     // Caso 1: Apenas arquivo configurado -> deve enviar fileToken
     lastAuth = null;
-    const c1 = await runCliAsync(['call', 'test', '{}', '--endpoint', mockEndpoint, '--json'], {
+    const c1 = await runCliAsync(['call', 'megabrain.test', '{}', '--endpoint', mockEndpoint, '--json'], {
       ...envDefaults,
       MEGABRAIN_TOKEN: '',
     });
@@ -233,7 +255,7 @@ test('3. Fallback e prioridade de variaveis de ambiente MEGABRAIN_TOKEN e MEGABR
 
     // Caso 2: Env var setada -> deve sobrepor arquivo
     lastAuth = null;
-    const c2 = await runCliAsync(['call', 'test', '{}', '--endpoint', mockEndpoint, '--json'], {
+    const c2 = await runCliAsync(['call', 'megabrain.test', '{}', '--endpoint', mockEndpoint, '--json'], {
       ...envDefaults,
       MEGABRAIN_TOKEN: 'token-from-env',
     });
@@ -271,7 +293,7 @@ test('4. Codigos de saida de erro quando argumentos invalidos sao passados', asy
   assert.equal(r2.status, 1, 'call without tool name should exit with code 1');
   assert.match(r2.stderr, /Tool name required/);
 
-  const r3 = await runCliAsync(['call', 'some_tool', '{not-json']);
+  const r3 = await runCliAsync(['call', 'megabrain.some_tool', '{not-json']);
   assert.equal(r3.status, 1, 'call with malformed JSON should exit with code 1');
   assert.match(r3.stderr, /Invalid JSON arguments/);
 

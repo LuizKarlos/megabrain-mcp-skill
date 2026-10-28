@@ -25,20 +25,21 @@ Export Merkle audit ledgers, verify Ed25519 cryptographic receipts, and execute 
 
 ## Workflow & CLI
 
-Execute via `megabrain call` or `npx @megabrain/cli call`:
+Execute via `megabrain call` com nome qualificado e JSON objeto. O parser rejeita JSON que não seja objeto.
 
 ```bash
-# 1. Export verifiable audit ledger
-megabrain call export_audit_ledger '{"work_id": "wrk_prod_01"}'
+# 1. Export soberano do ledger. Sem chave válida o kernel falha fechado.
+megabrain call megabrain.export_audit_ledger '{"work_id":"work_local_1"}'
 
-# 2. Verify ledger integrity and hash continuity offline
+# 2. merkle_verify.js verifica SOMENTE a cadeia local SHA-256. Não verifica Ed25519 nem root soberano.
+# Referência/arquivo local não é assinatura verificada.
 node scripts/merkle_verify.js ledger.json
 
-# 3. Export complete evidence pack with execution receipts
-megabrain call export_evidence_pack '{"work_id": "wrk_prod_01"}'
+# 3. Evidence pack soberano com receipts. Mock/parser não é prova live.
+megabrain call megabrain.export_evidence_pack '{"work_id":"work_local_1"}'
 
-# 4. Replay event log deterministically to target index
-megabrain call time_travel_replay '{"work_id": "wrk_prod_01", "target_index": 42}'
+# 4. Replay usa JSON objeto, não flags. Envelope/receipts/replay seguem o schema real.
+megabrain call megabrain.time_travel_replay '{"work_id":"work_local_1","target_index":42}'
 ```
 
 ## Cryptographic Invariants & Audit Guarantees

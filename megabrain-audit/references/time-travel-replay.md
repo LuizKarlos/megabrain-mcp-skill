@@ -19,5 +19,7 @@ Forensic analysis supports targeted stepping and divergence diagnostics:
 Facilitates incident post-mortems and cryptographic proofs of correctness for audit and regulatory compliance.
 
 ```bash
-megabrain call time_travel_replay --work_id "wrk_prod_01" --target_index 42
+megabrain call megabrain.time_travel_replay '{"work_id":"work_local_1","target_index":42}'
 ```
+
+Replay usa JSON objeto, não flags `--work_id`. Cadeia local válida não implica receipt Ed25519 verificado.

@@ -17,5 +17,6 @@ Ensures interactive elements are easily operable across touch and pointer device
 
 ```bash
 node scripts/wcag_check.js --fg="#ffffff" --bg="#111827" --width=44 --height=44
-node scripts/wcag_check.js --fg="#fca5a5" --bg="#7f1d1d" --json
 ```
+
+WCAG local aceita JSON/flags. Não é auditoria CSS headless. JSON inválido falha fechado.

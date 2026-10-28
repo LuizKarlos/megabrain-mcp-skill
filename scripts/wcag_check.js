@@ -62,12 +62,16 @@ Flags: --fg=<hex>, --bg=<hex>, --width=<px>, --height=<px>, --json, --help`);
     const idx = args.indexOf(k);
     return idx !== -1 && args[idx + 1] && !args[idx + 1].startsWith('-') ? args[idx + 1].replace(/^["']|["']$/g, '') : undefined;
   };
-  const params = {
-    fg: getArg('--fg') ?? '#000000', bg: getArg('--bg') ?? '#ffffff',
-    width: getArg('--width') ? Number(getArg('--width')) : 44, height: getArg('--height') ? Number(getArg('--height')) : 44,
-  };
   const file = args.find((a) => !a.startsWith('-'));
-  if (file) { try { Object.assign(params, JSON.parse(readFileSync(file, 'utf8'))); } catch {} }
+  const params = file
+    ? JSON.parse(readFileSync(file, 'utf8'))
+    : {
+        fg: getArg('--fg') ?? '#000000', bg: getArg('--bg') ?? '#ffffff',
+        width: getArg('--width') ? Number(getArg('--width')) : 44, height: getArg('--height') ? Number(getArg('--height')) : 44,
+      };
+  if (file && (params === null || typeof params !== 'object' || Array.isArray(params))) {
+    throw new TypeError('WCAG file must be a JSON object');
+  }
   const res = checkWcag(params);
   if (args.includes('--json')) console.log(JSON.stringify(res, null, 2));
   else console.log(`WCAG 2.1 Audit: ${res.valid ? 'PASSED' : 'FAILED'}

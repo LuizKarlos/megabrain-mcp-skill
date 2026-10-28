@@ -14,8 +14,13 @@ Ecosystem and tooling for the MegaBrain autonomous orchestration framework and M
 
 ### Installation
 
+Public registry install is not claimed. Use a local preview tarball after packing this tree, then verify the binary version.
+
 ```bash
-npm install -g @megabrain/cli
+# Preview only. Does not prove public registry availability.
+npm pack
+npm install -g ./megabrain-cli-3.2.0.tgz
+megabrain --version
 ```
 
 ### Usage
@@ -37,8 +42,8 @@ megabrain --help
 
 ## Local Tooling Scripts
 
-- `dag_validator.js`: Validação de aciclicidade DAG e cálculo de ondas (`node scripts/dag_validator.js tasks.json`)
-- `merkle_verify.js`: Verificação determinística de integridade do Merkle ledger (`node scripts/merkle_verify.js ledger.json`)
-- `ast_slice.js`: Fatiamento semântico de AST e redução de contexto (`node scripts/ast_slice.js src/app.js`)
-- `wcag_check.js`: Auditoria headless de contraste e conformidade WCAG 2.1 (`node scripts/wcag_check.js style.css`)
+- `dag_validator.js`: acyclicity and waves (`node scripts/dag_validator.js tasks.json`)
+- `merkle_verify.js`: local SHA-256 chain only, not Ed25519 (`node scripts/merkle_verify.js ledger.json`)
+- `ast_slice.js`: local regex outline; not server Python AST (`node scripts/ast_slice.js src/app.js`)
+- `wcag_check.js`: local JSON/flags contrast and target size; not CSS headless (`node scripts/wcag_check.js --fg="#ffffff" --bg="#111827" --width=44 --height=44`)
 

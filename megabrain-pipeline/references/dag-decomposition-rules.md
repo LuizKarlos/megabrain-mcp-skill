@@ -19,6 +19,8 @@ Governs task decomposition into directed acyclic graphs via `@megabrain/cli` and
 Validate task graphs prior to dispatch using `@megabrain/cli`:
 
 ```bash
-megabrain call decompose --task "Implement feature"
+megabrain call megabrain.decompose '{"prompt":"Analyze local DAG"}'
 node scripts/dag_validator.js tasks.json
 ```
+
+`decompose` exige `prompt`. `tasks` é opcional. `max_depth` não faz parte do contrato. Mock/parser não é prova live.

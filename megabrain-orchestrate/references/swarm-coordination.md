@@ -28,5 +28,7 @@ Prevents file access collisions and deadlocks across concurrent subagents:
 - **Zombie Purging**: Expired leases (`expires_at < now()`) auto-evict, promoting waiters.
 
 ```bash
-megabrain call arbitrate_concurrency --action "acquire" --mode "EXCLUSIVE" --paths '["src/core.js"]' --ttl_seconds 30
+megabrain call megabrain.arbitrate_concurrency '{"action":"acquire","mode":"EXCLUSIVE","paths":["src/core.js"],"ttl_seconds":30,"agent_id":"t1"}'
 ```
+
+Sem `evidence_bundle` o swarm retorna INSUFFICIENT_EVIDENCE. Sem executor retorna NOT_EXECUTED, nunca SUCCESS falso. Arbitragem de lease não é execução automática de missão.

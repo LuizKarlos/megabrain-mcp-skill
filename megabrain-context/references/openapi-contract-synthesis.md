@@ -18,5 +18,7 @@ Prevents integration regressions across decoupled client-server development cycl
 - **Drift Invariance**: Serves as single source of truth; tests fail immediately when contracts diverge.
 
 ```bash
-megabrain call synthesize_backend_contract --operation_id "getUser" --path "/api/v1/users/{id}" --method "get"
+megabrain call megabrain.synthesize_backend_contract '{"operation_id":"getUser","path":"/api/v1/users/{id}","method":"get"}'
 ```
+
+Nomes qualificados e JSON objeto. Flags `--operation_id` não são suportadas pelo CLI.

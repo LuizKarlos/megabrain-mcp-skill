@@ -87,5 +87,6 @@ export async function run({ positionals = [], flags = {} } = {}) {
     console.log(`- Installed ${installed.length} items to ${destDir}`);
     if (harnesses.length) console.log(`- Harnesses: ${harnesses.join(", ")}`);
   }
+  if (report.status !== "ok") process.exitCode = 1;
   return report;
 }
