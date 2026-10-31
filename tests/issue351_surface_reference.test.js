@@ -36,7 +36,7 @@ test("megabrain surface reference and package inclusion", () => {
 });
 test("megabrain surface governance and operational tools part 2", () => {
   const fullDoc = fs.readFileSync("megabrain-surface/SKILL.md", "utf8");
-  const part2 = fullDoc.split("## Superfície de governança e operação — parte 2")[1];
+  const part2 = fullDoc.split("## Superfície de governança e operação — parte 2")[1].split("## Aliases underscore — 38/38")[0];
   assert.ok(part2, "part 2 section exists");
 
   assert.match(part2, /sens[ií]vel/i, "mentions sensitive query rejection");
@@ -68,4 +68,31 @@ test("megabrain surface governance and operational tools part 2", () => {
 
   assert.equal("token" in calls["megabrain.export_client_config"], false);
   assert.equal("auth_token" in calls["megabrain.export_client_config"], false);
+});
+test("megabrain surface underscore aliases part 3", () => {
+  const fullDoc = fs.readFileSync("megabrain-surface/SKILL.md", "utf8");
+  const aliasSection = fullDoc.split("## Aliases underscore — 38/38")[1];
+  assert.ok(aliasSection, "alias section exists");
+
+  const pairs = [...aliasSection.matchAll(/(megabrain\.([a-z0-9_]+))\s*->\s*(megabrain_([a-z0-9_]+))/g)];
+  assert.equal(pairs.length, 38, "must contain exactly 38 alias pairs");
+
+  const canonicalSet = new Set(pairs.map((p) => p[1]));
+  const aliasSet = new Set(pairs.map((p) => p[3]));
+  assert.equal(canonicalSet.size, 38, "38 unique canonical tools");
+  assert.equal(aliasSet.size, 38, "38 unique alias tools");
+
+  for (const match of pairs) {
+    const [, canonical, canonTool, alias] = match;
+    assert.equal(alias, `megabrain_${canonical.slice("megabrain.".length)}`);
+    assert.equal(alias, `megabrain_${canonTool}`);
+  }
+
+  const exampleMatch = aliasSection.match(/megabrain call (megabrain_health)\s*'([^']+)'/);
+  assert.ok(exampleMatch, "example call exists");
+  assert.deepEqual(JSON.parse(exampleMatch[2]), {});
+
+  assert.ok(aliasSection.includes("megabrain."), "mentions megabrain. rejection");
+  assert.ok(aliasSection.includes("megabrain..health"), "mentions megabrain..health rejection");
+  assert.match(aliasSection, /string vazia/i, "mentions string vazia rejection");
 });

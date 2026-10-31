@@ -90,3 +90,52 @@ Limite: Rejeita query sensível e userinfo no endpoint; nunca incluir token ou c
 ```bash
 megabrain call megabrain.export_client_config '{"client_type":"cursor","tunnel_url":"https://mcp.atlascommand.dev/mcp"}'
 ```
+
+## Aliases underscore — 38/38
+
+Regra 1:1: `megabrain.<tool>` ↔ `megabrain_<tool>`; ambos aceitos pelo CLI; alias não é tool nova.
+Gramática do CLI: aceita `megabrain.health` e `megabrain_health`; rejeita `megabrain.`, `megabrain..health` e string vazia; argumentos devem ser JSON objeto (array/null rejeitados).
+
+```bash
+megabrain call megabrain_health '{}'
+```
+Equivalente a `megabrain call megabrain.health '{}'`.
+
+- megabrain.adjudicate_consensus -> megabrain_adjudicate_consensus
+- megabrain.anti_slop_lint -> megabrain_anti_slop_lint
+- megabrain.arbitrate_concurrency -> megabrain_arbitrate_concurrency
+- megabrain.coordinate_mission_swarm -> megabrain_coordinate_mission_swarm
+- megabrain.create_checkpoint -> megabrain_create_checkpoint
+- megabrain.css_validator -> megabrain_css_validator
+- megabrain.decompose -> megabrain_decompose
+- megabrain.design_tokens -> megabrain_design_tokens
+- megabrain.dispatch_subtask -> megabrain_dispatch_subtask
+- megabrain.dom_audit -> megabrain_dom_audit
+- megabrain.evaluate_execution_canary -> megabrain_evaluate_execution_canary
+- megabrain.execute_pipeline -> megabrain_execute_pipeline
+- megabrain.export_audit_ledger -> megabrain_export_audit_ledger
+- megabrain.export_client_config -> megabrain_export_client_config
+- megabrain.export_evidence_pack -> megabrain_export_evidence_pack
+- megabrain.get_mission_scorecard -> megabrain_get_mission_scorecard
+- megabrain.get_parallel_waves -> megabrain_get_parallel_waves
+- megabrain.get_telemetry_report -> megabrain_get_telemetry_report
+- megabrain.grant_approval -> megabrain_grant_approval
+- megabrain.heal_dependency_graph -> megabrain_heal_dependency_graph
+- megabrain.health -> megabrain_health
+- megabrain.infer -> megabrain_infer
+- megabrain.inspect -> megabrain_inspect
+- megabrain.inspect_work -> megabrain_inspect_work
+- megabrain.orchestrate -> megabrain_orchestrate
+- megabrain.playwright_capture -> megabrain_playwright_capture
+- megabrain.readability_score -> megabrain_readability_score
+- megabrain.recommend -> megabrain_recommend
+- megabrain.refine_prompt -> megabrain_refine_prompt
+- megabrain.resume_pipeline -> megabrain_resume_pipeline
+- megabrain.rollback_checkpoint -> megabrain_rollback_checkpoint
+- megabrain.slice_ast_context -> megabrain_slice_ast_context
+- megabrain.summarize_visual_tdd -> megabrain_summarize_visual_tdd
+- megabrain.synthesize_backend_contract -> megabrain_synthesize_backend_contract
+- megabrain.synthesize_subtask -> megabrain_synthesize_subtask
+- megabrain.time_travel_replay -> megabrain_time_travel_replay
+- megabrain.verify_subtask -> megabrain_verify_subtask
+- megabrain.voice_calibrate -> megabrain_voice_calibrate
