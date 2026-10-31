@@ -157,7 +157,7 @@ test("megabrain surface prompts part 5", () => {
 });
 test("megabrain surface roles part 6", () => {
   const fullDoc = fs.readFileSync("megabrain-surface/SKILL.md", "utf8");
-  const section = fullDoc.split("## Roles")[1];
+  const section = fullDoc.split("## Roles")[1].split("## Transportes e autenticação")[0];
   assert.ok(section, "roles section exists");
   const roleMatches = [...section.matchAll(/^- `([a-z_]+)` —/gm)];
   assert.strictEqual(roleMatches.length, 6, "must have exactly 6 canonical roles");
@@ -211,4 +211,41 @@ test("megabrain surface transports and authentication part 7", () => {
   const payload = JSON.parse(match[1]);
   assert.strictEqual(payload.method, "tools/list");
   assert.strictEqual(payload.params?._meta?.["io.modelcontextprotocol/protocolVersion"], "2026-07-28");
+});
+test("megabrain surface observability part 8", () => {
+  const doc = fs.readFileSync("megabrain-surface/SKILL.md", "utf8");
+  const sec = doc.split("## Observabilidade")[1];
+  assert.ok(sec, "observability section exists");
+
+  const section = sec.split("### Notificações de progresso")[0];
+  assert.match(section, /\/metrics/);
+  assert.match(section, /sem auth/);
+  assert.doesNotMatch(section, /auth obrigat[oó]ria/i);
+
+  for (const m of [
+    "megabrain_tool_calls_total",
+    "megabrain_arm_calls_total",
+    "megabrain_errors_total",
+    "megabrain_tool_errors_total",
+    "megabrain_tool_duration_seconds_bucket",
+    "megabrain_tool_duration_seconds_sum",
+    "megabrain_tool_duration_seconds_count",
+    "megabrain_tool_duration_seconds_total"
+  ]) {
+    assert.ok(sec.includes(m), "missing metric " + m);
+  }
+
+  const jsonMatch = sec.match(/```json\n([\s\S]*?)\n```/);
+  assert.ok(jsonMatch, "json progress notification exists");
+  const notif = JSON.parse(jsonMatch[1]);
+  assert.equal(notif.method, "notifications/progress");
+  assert.equal(notif.id, undefined);
+  assert.ok(notif.params?.progressToken && notif.params?.progress && notif.params?.total && notif.params?.message);
+
+  assert.match(sec, /progresso antes do resultado/);
+  for (const f of ["total_calls", "total_errors", "tool_distribution", "uptime_seconds"]) {
+    assert.ok(sec.includes(f), "missing field " + f);
+  }
+  assert.match(sec, /contadores vivos vs snapshot/);
+  assert.match(sec, /sem SLA sem medi[çc][ãa]o/);
 });

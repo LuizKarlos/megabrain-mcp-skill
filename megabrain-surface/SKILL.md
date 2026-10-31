@@ -310,3 +310,43 @@ curl -X POST https://mcp.atlascommand.dev/mcp \
   -H "Mcp-Method: tools/list" \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","clientCapabilities":{},"clientInfo":{"name":"megabrain-cli","version":"3.2.0"}}}}'
 ```
+
+## Observabilidade
+
+### Endpoint /metrics
+- `GET /metrics`: ASGI, sem auth, formato Prometheus `text/plain; version=0.0.4`.
+- Métricas expostas:
+  - `megabrain_tool_calls_total{tool,arm,outcome,error_code}`
+  - `megabrain_arm_calls_total{arm}`
+  - `megabrain_errors_total`
+  - `megabrain_tool_errors_total{tool}`
+  - `megabrain_tool_duration_seconds_bucket`
+  - `megabrain_tool_duration_seconds_sum`
+  - `megabrain_tool_duration_seconds_count`
+  - `megabrain_tool_duration_seconds_total`
+
+### Notificações de progresso
+Notificação de progresso enviada antes do resultado (sem `id` no JSON-RPC):
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "notifications/progress",
+  "params": {
+    "progressToken": "tok-1",
+    "progress": 50,
+    "total": 100,
+    "message": "executing task"
+  }
+}
+```
+Ordem obrigatória: progresso antes do resultado.
+
+### Tool get_telemetry_report
+Consulta operacional de telemetria:
+```bash
+megabrain call megabrain.get_telemetry_report '{}'
+```
+Retorno: `total_calls`, `total_errors`, `tool_distribution`, `uptime_seconds`.
+
+### Limites e garantias
+- Limite: contadores vivos vs snapshot; sem SLA sem medição.
