@@ -16,7 +16,17 @@ export function sliceAst(code = '', lang = 'auto') {
   const isPy = detected === 'py';
   const startRe = isPy ? /^[ \t]*(?:class\s+\w+|(?:async\s+)?def\s+\w+)/ : /^[ \t]*(?:export\b|(?:async\s+)?function\*?\b|class\b|interface\b|type\b)/;
   const pyMatch = /^([ \t]*(?:class\s+\w+(?:\([^)]*\))?|(?:async\s+)?def\s+[\w$]+\s*\([^)]*\)\s*(?:->\s*[^:]+)?)\s*:)/;
-  const cleanJs = (s) => (/^[ \t]*(?:export\s+)?interface\b/.test(s) || /^[ \t]*export\s*\{/.test(s) ? s.trim() : s.replace(/\s*\{.*\}\s*;?$/, '').replace(/\s*\{.*$/, '').trim());
+  // ponytail: paren balance handles destructured params/types; upgrade to full tokenizer if quoted braces needed.
+  const bodyIdx = (s) => {
+    let p = 0;
+    for (let i = 0; i < s.length; i++) {
+      if (s[i] === '(') p++;
+      else if (s[i] === ')') p = Math.max(0, p - 1);
+      else if (s[i] === '{' && p <= 0) return i;
+    }
+    return -1;
+  };
+  const cleanJs = (s) => (/^[ \t]*(?:export\s+)?interface\b/.test(s) || /^[ \t]*export\s*\{/.test(s) ? s.trim() : (bodyIdx(s) >= 0 ? s.slice(0, bodyIdx(s)).trim() : s.replace(/\s*\{.*$/, '').trim()));
 
   for (const line of code.split('\n')) {
     const trimmed = line.trim();
@@ -26,7 +36,7 @@ export function sliceAst(code = '', lang = 'auto') {
       if (isPy) {
         const m = curr.match(pyMatch);
         if (m) { decls.push(m[1]); curr = null; }
-      } else if (curr.includes('{') || curr.includes(';')) {
+      } else if (bodyIdx(curr) >= 0 || curr.includes(';')) {
         decls.push(cleanJs(curr));
         curr = null;
       }
@@ -36,7 +46,7 @@ export function sliceAst(code = '', lang = 'auto') {
         if (m) decls.push(m[1]);
         else curr = line.trimEnd();
       } else if (/^[ \t]*export\s*\{/.test(line) || /^[ \t]*type\b/.test(line)) decls.push(trimmed);
-      else if (line.includes('{')) decls.push(cleanJs(trimmed));
+      else if (bodyIdx(trimmed) >= 0) decls.push(cleanJs(trimmed));
       else if (line.includes(';') || (!line.includes('(') && !line.includes('function') && !line.includes('class'))) decls.push(trimmed);
       else curr = trimmed;
     }
