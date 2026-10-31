@@ -96,3 +96,40 @@ test("megabrain surface underscore aliases part 3", () => {
   assert.ok(aliasSection.includes("megabrain..health"), "mentions megabrain..health rejection");
   assert.match(aliasSection, /string vazia/i, "mentions string vazia rejection");
 });
+test("megabrain surface resources part 4", () => {
+  const fullDoc = fs.readFileSync("megabrain-surface/SKILL.md", "utf8");
+  const resourceSection = fullDoc.split("## Resources — parte 4")[1];
+  assert.ok(resourceSection, "resource section exists");
+
+  const expectedUris = [
+    "megabrain://workrecords",
+    "megabrain://ledgers",
+    "megabrain://contracts",
+    "megabrain://workrecords/{work_id}",
+    "megabrain://ledgers/{work_id}",
+    "megabrain://contracts/{operation_id}"
+  ];
+  for (const uri of expectedUris) {
+    assert.ok(resourceSection.includes(uri), `resource URI ${uri} is present`);
+  }
+
+  const jsonBlocks = [...resourceSection.matchAll(/```json\n([\s\S]*?)\n```/g)].map((m) => JSON.parse(m[1]));
+  const req = jsonBlocks.find((b) => b.method === "resources/read");
+  assert.ok(req, "resources/read request found");
+  assert.equal(req.method, "resources/read");
+  assert.equal(req.params.uri, "megabrain://workrecords/work-123");
+
+  const err = jsonBlocks.find((b) => b.error && b.error.code === -32002);
+  assert.ok(err, "error block found");
+  assert.equal(err.error.code, -32002);
+  assert.equal(err.error.message, "Resource not found");
+
+  const success = jsonBlocks.find((b) => b.result && b.result.contents);
+  assert.ok(success, "success block found");
+  assert.ok(success.result.contents[0].uri && success.result.contents[0].mimeType && success.result.contents[0].text);
+
+  assert.match(resourceSection, /megabrain call[\s\S]*?NAO le[\s\S]*?resources/i);
+  assert.match(resourceSection, /POST \/mcp.*Bearer/i);
+  assert.doesNotMatch(resourceSection, /megabrain call[^\n]*resource/i);
+  assert.doesNotMatch(resourceSection, /resources?[^\n]*megabrain call/i);
+});

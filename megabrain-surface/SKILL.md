@@ -139,3 +139,36 @@ Equivalente a `megabrain call megabrain.health '{}'`.
 - megabrain.time_travel_replay -> megabrain_time_travel_replay
 - megabrain.verify_subtask -> megabrain_verify_subtask
 - megabrain.voice_calibrate -> megabrain_voice_calibrate
+
+## Resources — parte 4
+
+Catálogo MCP de recursos estáticos e templates parametrizados.
+
+### Recursos diretos
+- `megabrain://workrecords`
+- `megabrain://ledgers`
+- `megabrain://contracts`
+
+### Resource templates
+- `megabrain://workrecords/{work_id}`
+- `megabrain://ledgers/{work_id}`
+- `megabrain://contracts/{operation_id}`
+
+### Exemplo JSON-RPC `resources/read`
+Requisição:
+```json
+{"jsonrpc":"2.0","id":1,"method":"resources/read","params":{"uri":"megabrain://workrecords/work-123"}}
+```
+
+Resposta de sucesso:
+```json
+{"jsonrpc":"2.0","id":1,"result":{"contents":[{"uri":"megabrain://workrecords/work-123","mimeType":"application/json","text":"{\"work_id\":\"work-123\"}"}]}}
+```
+
+Resposta de erro (-32002):
+```json
+{"jsonrpc":"2.0","id":1,"error":{"code":-32002,"message":"Resource not found"}}
+```
+
+Nota: `megabrain call` NAO le
+resources; resources exigem `POST /mcp` com Bearer.
