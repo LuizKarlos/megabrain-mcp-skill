@@ -1,11 +1,21 @@
 import { callTool } from "../client.js";
 
 // ponytail: single tool caller; upgrade to multi-step agent pipeline when needed
+export function validateToolName(name) {
+  if (typeof name !== "string" || !name || name.includes("..") || name.endsWith(".")) {
+    throw new Error("Tool name must be megabrain.<tool>");
+  }
+  if (!/^megabrain[._][a-zA-Z0-9_]+(\.[a-zA-Z0-9_]+)*$/.test(name)) {
+    throw new Error("Tool name must be megabrain.<tool>");
+  }
+  return name;
+}
+
 export async function run({ positionals = [], flags = {}, callToolFn = callTool }) {
   const pos = Array.isArray(positionals) ? positionals : [];
   const [name, rawArgs] = pos;
   if (!name) throw new Error("Tool name required. Usage: megabrain call <tool> [args-json]");
-  if (!String(name).startsWith("megabrain.")) throw new Error("Tool name must be megabrain.<tool>");
+  validateToolName(name);
   if (pos.length > 2) throw new Error("Too many arguments. Usage: megabrain call <tool> [args-json]");
   let args = {};
   if (rawArgs) {

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
+import { validateToolName } from "../src/commands/call.js";
 
 const BIN = fileURLToPath(new URL("../bin/megabrain.js", import.meta.url));
 
@@ -25,4 +26,13 @@ test("CALL_REJECT_ARRAY: array arguments are rejected before the network call", 
 
 test("CALL_REJECT_NULL: null arguments are rejected before the network call", () => {
   assertRejected(runCli(["call", "megabrain.health", "null"]), /Arguments must be a JSON object/);
+});
+
+test("CALL_VALIDATE_TOOL_NAME: matrix of accepted and rejected tool names", () => {
+  for (const ok of ["megabrain.health", "megabrain_health", "megabrain.inspect_work"]) {
+    assert.doesNotThrow(() => validateToolName(ok));
+  }
+  for (const bad of ["megabrain.", "megabrain..health", "megabrain.health.", "health", ""]) {
+    assert.throws(() => validateToolName(bad), /Tool name must be megabrain\.<tool>/);
+  }
 });
