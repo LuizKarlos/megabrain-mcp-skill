@@ -133,3 +133,25 @@ test("megabrain surface resources part 4", () => {
   assert.doesNotMatch(resourceSection, /megabrain call[^\n]*resource/i);
   assert.doesNotMatch(resourceSection, /resources?[^\n]*megabrain call/i);
 });
+test("megabrain surface prompts part 5", () => {
+  const fullDoc = fs.readFileSync("megabrain-surface/SKILL.md", "utf8");
+  const section = fullDoc.split("## Prompts — parte 5")[1];
+  assert.ok(section, "prompts section exists");
+  assert.ok(section.includes("sovereign-mission") && section.includes("consensus-adjudication"));
+  assert.ok(section.includes("objective") && section.includes("risk_level"));
+  assert.ok(section.includes("task_id") && section.includes("min_confidence") && section.includes("required_verdict"));
+  const jsonBlocks = [...section.matchAll(/```json\n([\s\S]*?)\n```/g)].map((m) => JSON.parse(m[1]));
+  const gets = jsonBlocks.filter((b) => b.method === "prompts/get");
+  assert.equal(gets.length, 2, "2 prompts/get requests");
+  const sm = gets.find((b) => b.params?.name === "sovereign-mission");
+  assert.ok(sm?.params?.arguments?.objective && sm?.params?.arguments?.risk_level);
+  const ca = gets.find((b) => b.params?.name === "consensus-adjudication");
+  assert.ok(ca?.params?.arguments?.task_id && ca?.params?.arguments?.min_confidence && ca?.params?.arguments?.required_verdict);
+  const msg = jsonBlocks.find((b) => b.result?.messages);
+  assert.equal(msg.result.messages[0].role, "user");
+  assert.ok(msg.result.messages[0].content?.text);
+  const err = jsonBlocks.find((b) => b.error?.code === -32602);
+  assert.ok(err && err.error.message.includes("Invalid params"));
+  assert.match(section, /megabrain call[\s\S]*?NAO executa[\s\S]*?prompts/i);
+  assert.match(section, /POST \/mcp.*Bearer/i);
+});

@@ -172,3 +172,35 @@ Resposta de erro (-32002):
 
 Nota: `megabrain call` NAO le
 resources; resources exigem `POST /mcp` com Bearer.
+
+## Prompts — parte 5
+
+Catálogo de prompts interativos estruturados.
+
+### Prompts disponíveis
+- `sovereign-mission` — args `objective` (obrigatorio), `risk_level` (default `LOW`).
+- `consensus-adjudication` — args `task_id` (obrigatorio), `min_confidence` (default `0.80`), `required_verdict` (default `APPROVED`).
+
+### Exemplos JSON-RPC `prompts/get`
+
+Requisição `sovereign-mission`:
+```json
+{"jsonrpc":"2.0","id":1,"method":"prompts/get","params":{"name":"sovereign-mission","arguments":{"objective":"run pipeline","risk_level":"LOW"}}}
+```
+
+Resposta de retorno (`messages` role `user`, content text):
+```json
+{"jsonrpc":"2.0","id":1,"result":{"messages":[{"role":"user","content":{"type":"text","text":"Executar sovereign mission..."}}]}}
+```
+
+Requisição `consensus-adjudication`:
+```json
+{"jsonrpc":"2.0","id":2,"method":"prompts/get","params":{"name":"consensus-adjudication","arguments":{"task_id":"task-123","min_confidence":"0.80","required_verdict":"APPROVED"}}}
+```
+
+Resposta de erro (-32602 Invalid params para prompt desconhecido ou argumento obrigatorio ausente):
+```json
+{"jsonrpc":"2.0","id":3,"error":{"code":-32602,"message":"Invalid params"}}
+```
+
+Nota: `megabrain call` NAO executa prompts; prompts exigem `POST /mcp` com Bearer.
