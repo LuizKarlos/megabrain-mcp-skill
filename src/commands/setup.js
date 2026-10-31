@@ -3,7 +3,7 @@ import path from "node:path";
 import os from "node:os";
 import { fileURLToPath } from "node:url";
 import { checkHealth } from "../client.js";
-import { getEndpoint, getToken } from "../config.js";
+import { getEndpoint, getToken, validateEndpoint } from "../config.js";
 
 const SKILLS = [
   "megabrain-orchestrate",
@@ -22,6 +22,7 @@ export async function run({ positionals = [], flags = {} } = {}) {
   }
 
   const endpoint = flags?.endpoint || getEndpoint();
+  validateEndpoint(endpoint);
   const token = getToken();
   const rootDir = fileURLToPath(new URL("../../", import.meta.url));
   const destArg = typeof flags?.dest === "string" ? flags.dest : (positionals[0] || null);
