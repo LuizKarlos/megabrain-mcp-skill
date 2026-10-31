@@ -47,6 +47,7 @@ megabrain call megabrain.readability_score '{"text":"Technical document content"
 - **Consensus Threshold**: Score ponderado é métrica; não autoriza merge, commit ou teste GREEN.
 - **No Server Arbiter**: Sem terceiro árbitro LLM automático. Jev é só advisory (`advisory_only=true`).
 - **Zero AI Slop**: Strip sycophantic openers, hyperbolic adjectives, and passive hedges. Enforce direct assertions.
+- **Review Invariants**: Consenso exige reviews com reviewer, approved, score, verdict, notes e rationale; sem árbitro LLM server-side.
 
 ## References
 

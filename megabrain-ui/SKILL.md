@@ -30,7 +30,8 @@ Execute via `megabrain call` com nome qualificado e JSON objeto. O parser rejeit
 
 ```bash
 # 1. Captura headless com fixture permitida e PNG. Sem URL remota/SSRF.
-megabrain call megabrain.playwright_capture '{"html_content":"<button>Ok</button>","viewport":{"width":1280,"height":800}}'
+# O retorno traz screenshot em base64 PNG; decodifique e valide os magic bytes `89 50 4E 47` antes de usar; URL remota/SSRF é proibida.
+megabrain call megabrain.playwright_capture '{"url":"http://127.0.0.1:8000/fixture.html","viewport":{"width":1280,"height":800}}'
 
 # 2. Visual TDD usa html_content real, não path html/css.
 megabrain call megabrain.summarize_visual_tdd '{"html_content":"<main><h1>Ok</h1></main>"}'
@@ -51,6 +52,7 @@ node scripts/wcag_check.js --fg="#ffffff" --bg="#111827" --width=44 --height=44
 - **Visual TDD Gate**: Require zero violations (`violations_count == 0`, `status == "pass"`) before green verification.
 - **Contrast & Sizing Standards**: Enforce WCAG 2.1 AA contrast (>= 4.5:1 text, >= 3.0:1 large) and >= 44x44px targets.
 - **Token Invariance**: Strictly forbid undeclared raw hex/rgb color literals outside canonical root design tokens.
+- **Capture Invariants**: O retorno traz screenshot em base64 PNG; decodifique e valide os magic bytes `89 50 4E 47` antes de usar; URL remota/SSRF é proibida.
 
 ## References
 
