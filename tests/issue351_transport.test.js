@@ -45,6 +45,10 @@ test("TR_HEADERS_HEALTH: tools/call sends contract headers and protocol _meta", 
   assert.equal(body.method, "tools/call");
   assert.equal(body.params.name, "megabrain.health");
   assert.equal(body.params._meta["io.modelcontextprotocol/protocolVersion"], PROTOCOL_VERSION);
+  assert.equal(typeof body.params._meta["io.modelcontextprotocol/clientCapabilities"], "object");
+  assert.ok(body.params._meta["io.modelcontextprotocol/clientCapabilities"] !== null);
+  assert.ok(!Array.isArray(body.params._meta["io.modelcontextprotocol/clientCapabilities"]));
+  assert.ok("tools" in body.params._meta["io.modelcontextprotocol/clientCapabilities"]);
 });
 
 test("TR_HEADERS_LIST: tools/list sends contract headers without Mcp-Name", async () => {
