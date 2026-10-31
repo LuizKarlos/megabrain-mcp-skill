@@ -36,8 +36,11 @@ megabrain call megabrain.get_parallel_waves '{"work_id":"work_local_1"}'
 # 3. execute_pipeline exige test_commands verificados pelo harness. Sem índice de wave. Sem provider.
 megabrain call megabrain.execute_pipeline '{"work_id":"work_local_1","test_commands":{"t1":{"command":"node --test tests/issue351_docs_pipeline.test.js"}},"auto_heal":false}'
 
-# 4. heal usa tasks/catálogo. Cura reconhecida, opção canário e estado terminal. Sem execução de provider.
-megabrain call megabrain.heal_dependency_graph '{"work_id":"work_local_1","tasks":[{"id":"t1","status":"BLOCKED"}],"canary":true}'
+# 4. heal usa tasks/catálogo. Cura reconhecida e estado terminal. Sem execução de provider.
+megabrain call megabrain.heal_dependency_graph '{"tasks":[{"id":"t1","title":"t1","category":"IMPLEMENTATION","dependencies":["missing_cap"],"status":"BLOCKED"}],"completed_task_ids":[],"failed_task_ids":["t1"],"capability_catalog":{"missing_cap":{"title":"Heal","category":"IMPLEMENTATION","produces":["missing_cap"]}}}'
+
+# 5. synthesize_subtask cria subtask vinculada a parent_task_id com dependências.
+megabrain call megabrain.synthesize_subtask '{"work_id":"work_local_1","parent_task_id":"t1","new_task":{"id":"t1_heal_missing_cap","title":"Heal","category":"IMPLEMENTATION","dependencies":["t1"]}}'
 ```
 
 ## UX & Fault Tolerance Rules

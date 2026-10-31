@@ -43,7 +43,7 @@ megabrain call megabrain.rollback_checkpoint '{"work_id":"work_local_1","checkpo
 
 ## UX & Operational Rules
 
-- **Anti-Context-Dumping**: Dispatch minimal context packets (<3,000 tokens). Never dump full workspace trees.
+- **Anti-Context-Dumping**: Dispatch minimal context packets (pacotes mínimos delimitados). Never dump full workspace trees.
 - **Structured Communication**: Return concise status summaries with work IDs, checkpoint hashes, and gate results.
 
 ## References
