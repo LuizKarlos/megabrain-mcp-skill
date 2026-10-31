@@ -32,6 +32,7 @@
     "megabrain-audit",
     "megabrain-context",
     "megabrain-ui",
+    "megabrain-surface",
     "README.md"
   ]
 }
