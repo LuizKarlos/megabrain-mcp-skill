@@ -204,3 +204,69 @@ Resposta de erro (-32602 Invalid params para prompt desconhecido ou argumento ob
 ```
 
 Nota: `megabrain call` NAO executa prompts; prompts exigem `POST /mcp` com Bearer.
+
+## Roles
+
+Nota kernel-only: contratos de governança; zero providers/models; role não executa inferência.
+
+### Catalogo Canonico
+- `mission_compiler` — Compiles initial mission prompts, synthesizes requirements, and defines architectural strategy. Capabilities: `chat`. Work product: `PLAN`.
+- `cartographer` — Maps repository architecture, dependencies, and file layout. Capabilities: `chat`. Work product: `ANALYSIS`.
+- `implementer` — Primary code generator creating atomic patch units. Capabilities: `chat`, `tool_calling`. Work product: `IMPLEMENTATION`.
+- `reviewer` — Independent verification ensuring regression-free code, spec compliance, and operational criteria. Capabilities: `chat`. Work product: `REVIEW`.
+- `failure_diagnostician` — Root-cause diagnosis for test failures and error traces. Capabilities: `chat`, `reasoning`. Work product: `ANALYSIS`.
+- `creative_copywriter` — Persuasive and humanized copywriting with active AI slop elimination. Capabilities: `chat`. Work product: `ANALYSIS`.
+
+### Aliases Legados
+- `adjudicator` -> `reviewer`
+- `architecture_adjudicator` -> `reviewer`
+- `brand_strategist` -> `mission_compiler`
+- `chief_architect` -> `mission_compiler`
+- `code_reviewer` -> `reviewer`
+- `copywriter` -> `creative_copywriter`
+- `critical_acceptance` -> `reviewer`
+- `diagnostician` -> `failure_diagnostician`
+- `documentation` -> `mission_compiler`
+- `documentation_agent` -> `mission_compiler`
+- `editor` -> `reviewer`
+- `editorial_reviewer` -> `reviewer`
+- `growth_hacker` -> `creative_copywriter`
+- `independent_reviewer` -> `reviewer`
+- `marketer` -> `mission_compiler`
+- `marketing` -> `mission_compiler`
+- `next_mission` -> `mission_compiler`
+- `next_mission_generation` -> `mission_compiler`
+- `next_mission_generator` -> `mission_compiler`
+- `spec_critic` -> `reviewer`
+- `writer` -> `creative_copywriter`
+
+### Exemplos JSON
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/call",
+  "params": {
+    "name": "megabrain.decompose",
+    "arguments": {
+      "task": "Synthesize plan",
+      "metadata": { "recommended_role": "mission_compiler" }
+    }
+  }
+}
+```
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "method": "tools/call",
+  "params": {
+    "name": "megabrain.dispatch_subtask",
+    "arguments": {
+      "subtask_id": "st-1",
+      "role": "implementer"
+    }
+  }
+}
+```

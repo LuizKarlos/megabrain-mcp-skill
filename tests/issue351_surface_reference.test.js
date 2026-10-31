@@ -155,3 +155,32 @@ test("megabrain surface prompts part 5", () => {
   assert.match(section, /megabrain call[\s\S]*?NAO executa[\s\S]*?prompts/i);
   assert.match(section, /POST \/mcp.*Bearer/i);
 });
+test("megabrain surface roles part 6", () => {
+  const fullDoc = fs.readFileSync("megabrain-surface/SKILL.md", "utf8");
+  const section = fullDoc.split("## Roles")[1];
+  assert.ok(section, "roles section exists");
+  const roleMatches = [...section.matchAll(/^- `([a-z_]+)` —/gm)];
+  assert.strictEqual(roleMatches.length, 6, "must have exactly 6 canonical roles");
+  const canonical = new Set(["mission_compiler", "cartographer", "implementer", "reviewer", "failure_diagnostician", "creative_copywriter"]);
+  const foundRoles = new Set(roleMatches.map((m) => m[1]));
+  assert.deepStrictEqual(foundRoles, canonical);
+  assert.strictEqual(foundRoles.has("supervisor"), false);
+  assert.ok(!roleMatches.some((m) => !canonical.has(m[1])));
+  const caps = {
+    mission_compiler: ["chat"], cartographer: ["chat"], implementer: ["chat", "tool_calling"],
+    reviewer: ["chat"], failure_diagnostician: ["chat", "reasoning"], creative_copywriter: ["chat"]
+  };
+  for (const [r, expected] of Object.entries(caps)) {
+    const line = section.split("\n").find((l) => l.startsWith(`- \`${r}\` —`));
+    for (const c of expected) assert.ok(line?.includes(`\`${c}\``), `${r} missing ${c}`);
+  }
+  const aliases = [...section.matchAll(/^- `([a-z_]+)` -> `([a-z_]+)`/gm)];
+  assert.strictEqual(aliases.length, 21, "must have exactly 21 aliases");
+  for (const [, a, target] of aliases) assert.ok(canonical.has(target), `alias ${a} target ${target} not canonical`);
+  const jsons = [...section.matchAll(/```json\n([\s\S]*?)\n```/g)].map((m) => JSON.parse(m[1]));
+  assert.strictEqual(jsons.length, 2, "must parse exactly 2 JSON examples");
+  assert.ok(jsons.some((j) => j.params?.name === "megabrain.decompose" && j.params?.arguments?.metadata?.recommended_role));
+  assert.ok(jsons.some((j) => j.params?.name === "megabrain.dispatch_subtask"));
+  assert.match(section, /zero providers\/models/);
+  assert.match(section, /n[ãa]o executa infer[êe]ncia/);
+});
