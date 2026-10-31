@@ -19,12 +19,13 @@ async function sendRpc(method, params = {}, options = {}) {
   if (method === "tools/call" && params.name) headers["Mcp-Name"] = params.name;
   params._meta = { ...(params._meta || {}), "io.modelcontextprotocol/protocolVersion": "2026-07-28" };
 
+  const id = Date.now();
   const res = await fetch(endpoint, {
     method: "POST",
     headers,
     body: JSON.stringify({
       jsonrpc: "2.0",
-      id: Date.now(),
+      id,
       method,
       params
     }),
@@ -41,19 +42,26 @@ async function sendRpc(method, params = {}, options = {}) {
   }
 
   const contentType = res.headers.get("content-type") || "";
+  const match = (m) => Boolean(m && typeof m === "object" && m.jsonrpc === "2.0" && m.id === id && ("result" in m || "error" in m));
   let data;
   if (contentType.includes("text/event-stream")) {
-    const text = await res.text();
-    for (const line of text.split("\n")) {
-      if (line.startsWith("data:")) {
-        try {
-          data = JSON.parse(line.slice(5).trim());
+    const text = (await res.text()).replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+    for (const frame of text.split(/\n{2,}/)) {
+      const lines = frame.split("\n").filter((l) => l.startsWith("data:")).map((l) => l.slice(5).replace(/^ /, ""));
+      if (!lines.length) continue;
+      try {
+        const m = JSON.parse(lines.join("\n"));
+        if (match(m)) {
+          data = m;
           break;
-        } catch {}
-      }
+        }
+      } catch {}
     }
   } else {
-    data = await res.json();
+    try {
+      const m = await res.json();
+      if (match(m)) data = m;
+    } catch {}
   }
 
   if (!data) throw new Error("Empty or invalid response from server");
