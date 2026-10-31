@@ -6,7 +6,12 @@ import process from 'node:process';
 
 // ponytail: sRGB/WCAG 2.1 relative luminance; upgrade to APCA/WCAG 3 for perceptual lightness
 export function parseColor(str) {
-  if (str && typeof str === 'object' && typeof str.r === 'number') return str;
+  // ponytail: validates RGB [0..255]; upgrade if color spaces beyond RGB are supported
+  if (str && typeof str === 'object') {
+    return [str.r, str.g, str.b].every((v) => Number.isInteger(v) && v >= 0 && v <= 255)
+      ? { r: str.r, g: str.g, b: str.b }
+      : null;
+  }
   if (typeof str !== 'string') return null;
   let h = str.trim().replace(/^#/, '');
   if (h.length === 3) h = h.split('').map((c) => c + c).join('');
@@ -35,7 +40,13 @@ export function checkWcag(params = {}) {
   const validColors = Boolean(parseColor(fg) && parseColor(bg));
   const ratio = validColors ? getContrastRatio(fg, bg) : 1;
   const passAA = validColors && ratio >= 4.5, passLarge = validColors && ratio >= 3.0;
-  const width = Number(params.width ?? 44), height = Number(params.height ?? 44);
+  const parseDim = (v) => {
+    if (v === undefined) return 44;
+    if (typeof v === 'number') return Number.isFinite(v) && v >= 0 ? v : 0;
+    if (typeof v === 'string' && /^\d+(\.\d+)?$/.test(v.trim())) return Number(v);
+    return 0;
+  };
+  const width = parseDim(params.width), height = parseDim(params.height);
   const targetPass = width >= 44 && height >= 44;
   return {
     contrast: { ratio, passAA, passLarge },
