@@ -40,16 +40,17 @@ export function verifyLedger(blocks) {
       continue;
     }
 
+    const isSafeIndex = typeof block.index === 'number' && Number.isSafeInteger(block.index);
     if (i === 0) {
-      if (Number(block.index) !== 0) {
-        errors.push('Block 0: genesis index must be 0');
+      if (!isSafeIndex || block.index !== 0) {
+        errors.push(!isSafeIndex ? 'Block 0: index must be a safe integer' : 'Block 0: genesis index must be 0');
       }
       if (!isGenesisPrevValid(block.previous_hash)) {
         errors.push(`Block 0: invalid previous_hash (${block.previous_hash})`);
       }
     } else {
-      if (Number(block.index) !== i) {
-        errors.push(`Block ${i}: index sequence mismatch`);
+      if (!isSafeIndex || block.index !== i) {
+        errors.push(!isSafeIndex ? `Block ${i}: index must be a safe integer` : `Block ${i}: index sequence mismatch`);
       }
       const prevHash = list[i - 1]?.hash;
       if (block.previous_hash !== prevHash) {

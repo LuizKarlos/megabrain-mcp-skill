@@ -21,3 +21,29 @@ test('GENESIS_ZERO_OK', () => {
 });
 
 test('GENESIS_MISSING_INDEX_INVALID', () => { const b={previous_hash:'0', data:'x'}; b.hash=computeBlockHash(b); assert.equal(verifyLedger([b]).valid, false); });
+
+test('INDEX_STRING_COERCION_INVALID', () => {
+  const g = mk(0, '0'.repeat(64));
+  assert.equal(verifyLedger([g, mk('1', g.hash)]).valid, false);
+});
+
+test('INDEX_NULL_INVALID', () => {
+  const g = mk(0, '0'.repeat(64));
+  assert.equal(verifyLedger([mk(null, '0'.repeat(64))]).valid, false);
+  assert.equal(verifyLedger([g, mk(null, g.hash)]).valid, false);
+});
+
+test('INDEX_FLOAT_INVALID', () => {
+  const g = mk(0, '0'.repeat(64));
+  assert.equal(verifyLedger([g, mk(1.5, g.hash)]).valid, false);
+});
+
+test('INDEX_UNSAFE_INTEGER_INVALID', () => {
+  const g = mk(0, '0'.repeat(64));
+  assert.equal(verifyLedger([g, mk(Number.MAX_SAFE_INTEGER + 1, g.hash)]).valid, false);
+});
+
+test('INDEX_VALID_SEQUENCE_OK', () => {
+  const g = mk(0, '0'.repeat(64));
+  assert.equal(verifyLedger([g, mk(1, g.hash)]).valid, true);
+});
