@@ -15,3 +15,19 @@ test('ENV_LINEAR_OK', () => {
   b.hash = computeBlockHash(b);
   assert.equal(verifyLedger([b]).valid, true);
 });
+test('ENV_ALLOWLIST_WRAPPER', () => {
+  const b = { index: 0, previous_hash: '0', data: 'x' };
+  b.hash = computeBlockHash(b);
+  for (const env of [
+    { blocks: [b], attestation: 'X' },
+    { blocks: [b], receipt: 'X' },
+    { blocks: [b], certificate: 'X' },
+    { blocks: [b], extra: 1 },
+  ]) {
+    const r = verifyLedger(env);
+    assert.equal(r.valid, false);
+    assert.ok(r.errors.some((e) => /unsupported/i.test(e)));
+  }
+  assert.equal(verifyLedger({ blocks: [b] }).valid, true);
+  assert.equal(verifyLedger([b]).valid, true);
+});

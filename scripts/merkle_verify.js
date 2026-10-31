@@ -20,11 +20,13 @@ export function computeBlockHash(block) {
 }
 
 export function verifyLedger(blocks) {
-  const list = Array.isArray(blocks) ? blocks : (Array.isArray(blocks?.blocks) ? blocks.blocks : null);
-  if (blocks && typeof blocks === 'object' && !Array.isArray(blocks) &&
-      ('merkle_root' in blocks || 'signature' in blocks || 'certificate' in blocks)) {
-    return { valid: false, blocks_verified: 0, errors: ['Unsupported envelope: merkle_root/signature/certificate are outside the linear chain contract'] };
+  if (blocks && typeof blocks === 'object' && !Array.isArray(blocks)) {
+    const extra = Object.keys(blocks).filter((k) => k !== 'blocks');
+    if (extra.length > 0) {
+      return { valid: false, blocks_verified: 0, errors: [`Unsupported envelope keys: ${extra.join(', ')}`] };
+    }
   }
+  const list = Array.isArray(blocks) ? blocks : (Array.isArray(blocks?.blocks) ? blocks.blocks : null);
   if (!list) return { valid: false, blocks_verified: 0, errors: ['Ledger must be an array of blocks'] };
   if (list.length === 0) return { valid: true, blocks_verified: 0, errors: [] };
 
