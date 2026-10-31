@@ -270,3 +270,43 @@ Nota kernel-only: contratos de governança; zero providers/models; role não exe
   }
 }
 ```
+## Transportes e autenticação
+
+Três transportes suportados e governança estrita de autenticação:
+
+### 1. Streamable HTTP
+- Entrypoint: `POST /mcp`
+- Endpoints: `http://127.0.0.1:20130/mcp` (local) e `https://mcp.atlascommand.dev/mcp` (deploy).
+- Headers obrigatórios:
+  - `Content-Type: application/json`
+  - `Accept: application/json, text/event-stream`
+  - `Authorization: Bearer <token>`
+  - `MCP-Protocol-Version: 2026-07-28`
+  - `Mcp-Method: <method>`
+  - `Mcp-Name: <name>` (em `tools/call`)
+- Objeto `params._meta` obrigatório:
+  - `io.modelcontextprotocol/protocolVersion`: `"2026-07-28"`
+  - `clientCapabilities`: objeto de capacidades do cliente
+  - `clientInfo`: objeto de identificação do cliente
+
+### 2. stdio async
+- Entrypoint: `MegaBrainNativeMCPServer.run_stdio_async` para harness local.
+
+### 3. JSON-RPC stdio
+- Entrypoint: `run_jsonrpc_stdio`, newline-delimited JSON-RPC 2.0, sem `call_tool` in-process.
+
+### Regras de Autenticação e Segurança
+- `Authorization: Bearer <token>` obrigatório para `/mcp`.
+- Tokens em query string (`?token=`, `?key=`, `?bearer=`) são rejeitados com HTTP 401.
+- Cookies de sessão web (`mb_user_session`, `mb_admin_session`) não autenticam `/mcp`.
+
+### Exemplo curl / JSON-RPC `tools/list`
+```bash
+curl -X POST https://mcp.atlascommand.dev/mcp \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -H "Authorization: Bearer \${MEGABRAIN_TOKEN}" \
+  -H "MCP-Protocol-Version: 2026-07-28" \
+  -H "Mcp-Method: tools/list" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","clientCapabilities":{},"clientInfo":{"name":"megabrain-cli","version":"3.2.0"}}}}'
+```

@@ -184,3 +184,31 @@ test("megabrain surface roles part 6", () => {
   assert.match(section, /zero providers\/models/);
   assert.match(section, /n[ãa]o executa infer[êe]ncia/);
 });
+test("megabrain surface transports and authentication part 7", () => {
+  const doc = fs.readFileSync("megabrain-surface/SKILL.md", "utf8");
+  const sec = doc.split("## Transportes e autenticação")[1];
+  assert.ok(sec, "section Transportes e autenticação exists");
+  assert.match(sec, /Streamable HTTP[\s\S]*?POST \/mcp/);
+  assert.match(sec, /http:\/\/127\.0\.0\.1:20130\/mcp/);
+  assert.match(sec, /https:\/\/mcp\.atlascommand\.dev\/mcp/);
+  assert.match(sec, /MegaBrainNativeMCPServer\.run_stdio_async/);
+  assert.match(sec, /run_jsonrpc_stdio/);
+  assert.match(sec, /sem `call_tool` in-process/);
+  for (const h of ["Content-Type: application/json", "Accept: application/json, text/event-stream", "Authorization: Bearer", "MCP-Protocol-Version: 2026-07-28", "Mcp-Method", "Mcp-Name"]) {
+    assert.ok(sec.includes(h), `header ${h} missing`);
+  }
+  for (const m of ["io.modelcontextprotocol/protocolVersion", "clientCapabilities", "clientInfo"]) {
+    assert.ok(sec.includes(m), `meta field ${m} missing`);
+  }
+  assert.ok(sec.includes("2026-07-28"), "must contain protocol version 2026-07-28");
+  for (const q of ["?token=", "?key=", "?bearer="]) assert.ok(sec.includes(q), `query ${q} missing`);
+  assert.match(sec, /rejeitados com HTTP 401/);
+  assert.match(sec, /mb_user_session/);
+  assert.match(sec, /mb_admin_session/);
+  assert.match(sec, /n[ãa]o autenticam/);
+  const match = sec.match(/-d \x27(\{[\s\S]*?\})\x27/);
+  assert.ok(match, "curl payload found");
+  const payload = JSON.parse(match[1]);
+  assert.strictEqual(payload.method, "tools/list");
+  assert.strictEqual(payload.params?._meta?.["io.modelcontextprotocol/protocolVersion"], "2026-07-28");
+});
