@@ -27,7 +27,10 @@ export function validateDAG(tasks = []) {
   }
 
   for (const t of tasks) {
-    for (const dep of new Set(t.depends_on || [])) {
+    // Canonical dependencies has documented precedence over legacy depends_on
+    const raw = t.dependencies ?? t.depends_on;
+    const deps = Array.isArray(raw) ? raw : [];
+    for (const dep of new Set(deps)) {
       if (!knownIds.has(dep)) { if (!missing_dependencies.includes(dep)) missing_dependencies.push(dep); }
       else { inDegree.set(t.id, inDegree.get(t.id) + 1); dependents.get(dep).push(t.id); }
     }
