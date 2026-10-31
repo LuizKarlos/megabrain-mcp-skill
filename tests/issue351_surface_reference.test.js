@@ -249,3 +249,34 @@ test("megabrain surface observability part 8", () => {
   assert.match(sec, /contadores vivos vs snapshot/);
   assert.match(sec, /sem SLA sem medi[çc][ãa]o/);
 });
+test("megabrain surface error contract part 9", async () => {
+  const doc = fs.readFileSync("megabrain-surface/SKILL.md", "utf8");
+  const sec = doc.split("## Contrato de erro")[1];
+  assert.ok(sec, "error contract section exists");
+
+  const codes = [
+    "INVALID_ARGUMENT", "INVALID_ENDPOINT", "NO_EXECUTABLE_ROUTE", "FALLBACK_NOT_SUPPORTED",
+    "INSUFFICIENT_EVIDENCE", "NOT_EXECUTED", "NOT_DISPATCHED", "UNAUTHORIZED_RELEASE",
+    "MISSION_NOT_FOUND", "EXECUTION_FAILURE", "DEPENDENCY_BLOCKED", "LOCK_ACQUISITION_FAILED", "TIMEOUT_EXCEEDED"
+  ];
+  for (const c of codes) assert.ok(sec.includes(c), "missing code: " + c);
+
+  assert.ok(sec.includes("^[A-Z][A-Z0-9_]{0,63}$"));
+  assert.ok(sec.includes("TOOL_ERROR"));
+
+  const ok = JSON.parse(sec.match(/\{"status":"completed"\}/)[0]);
+  const err = JSON.parse(sec.match(/\{"status":"error","error_code":"INVALID_ENDPOINT"\}/)[0]);
+  assert.equal(ok.status, "completed");
+  assert.equal(err.status, "error");
+  assert.equal(err.error_code, "INVALID_ENDPOINT");
+
+  const { isBusinessFailure } = await import("../src/commands/call.js");
+  assert.equal(isBusinessFailure({ isError: true }), true);
+  assert.equal(isBusinessFailure({ status: "error" }), true);
+  assert.equal(isBusinessFailure({ structuredContent: { status: "error" } }), true);
+  assert.equal(isBusinessFailure({ structuredContent: { error_code: "EXECUTION_FAILURE" } }), true);
+  assert.equal(isBusinessFailure({ content: [{ type: "text", text: "{\"status\":\"error\"}" }] }), true);
+  assert.equal(isBusinessFailure({ content: [{ type: "text", text: "{\"error_code\":\"TOOL_ERROR\"}" }] }), true);
+  assert.equal(isBusinessFailure({ status: "completed" }), false);
+  assert.equal(isBusinessFailure({ content: [{ type: "text", text: "Healthy plain text" }] }), false);
+});

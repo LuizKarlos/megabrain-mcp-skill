@@ -350,3 +350,39 @@ Retorno: `total_calls`, `total_errors`, `tool_distribution`, `uptime_seconds`.
 
 ### Limites e garantias
 - Limite: contadores vivos vs snapshot; sem SLA sem medição.
+
+## Contrato de erro
+
+### Formas de resultado
+Resultados operacionais admitem: `status:"completed"` (sucesso), `status:"error"`, `isError:true`, `structuredContent` com `status/error_code`, e content text JSON.
+
+Exemplo de sucesso:
+```json
+{"status":"completed"}
+```
+
+Exemplo de erro:
+```json
+{"status":"error","error_code":"INVALID_ENDPOINT"}
+```
+
+### Formato de error_code
+O campo `error_code` bounded segue a regex `^[A-Z][A-Z0-9_]{0,63}$`. Qualquer valor ausente ou malformado cai em `TOOL_ERROR` no outcome SDK.
+
+Códigos documentados:
+- `INVALID_ARGUMENT`
+- `INVALID_ENDPOINT`
+- `NO_EXECUTABLE_ROUTE`
+- `FALLBACK_NOT_SUPPORTED`
+- `INSUFFICIENT_EVIDENCE`
+- `NOT_EXECUTED`
+- `NOT_DISPATCHED`
+- `UNAUTHORIZED_RELEASE`
+- `MISSION_NOT_FOUND`
+- `EXECUTION_FAILURE`
+- `DEPENDENCY_BLOCKED`
+- `LOCK_ACQUISITION_FAILED`
+- `TIMEOUT_EXCEEDED`
+
+### Regra businessFail (CLI)
+A regra `businessFail` (CLI) define exit 1 para `isError`, `status:error` top-level, `structuredContent.status:error`, `structuredContent.error_code` não vazio, ou content text JSON com `status:error`/`error_code` não vazio; exit 0 em texto não-JSON/saudável.
