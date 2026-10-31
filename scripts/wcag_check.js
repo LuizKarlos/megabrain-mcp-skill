@@ -67,18 +67,31 @@ Usage: node scripts/wcag_check.js --fg="#000" --bg="#fff" [--width=44] [--height
 Flags: --fg=<hex>, --bg=<hex>, --width=<px>, --height=<px>, --json, --help`);
     process.exit(0);
   }
-  const getArg = (k) => {
-    const eq = args.find((x) => x.startsWith(k + '='));
-    if (eq) return eq.slice(k.length + 1).replace(/^["']|["']$/g, '');
-    const idx = args.indexOf(k);
-    return idx !== -1 && args[idx + 1] && !args[idx + 1].startsWith('-') ? args[idx + 1].replace(/^["']|["']$/g, '') : undefined;
-  };
-  const file = args.find((a) => !a.startsWith('-'));
+  // ponytail: strict argv grammar without parser dep; upgrade if subcommands added
+  const VAL_FLAGS = ['--fg', '--bg', '--width', '--height'];
+  const opts = {}, pos = [], fail = (m) => { console.error(m); process.exit(1); };
+  for (let i = 0; i < args.length; i++) {
+    const a = args[i];
+    if (a === '--json') continue;
+    const match = VAL_FLAGS.find((f) => a === f || a.startsWith(f + '='));
+    if (match) {
+      if (opts[match.slice(2)] !== undefined) fail(`Duplicate ${match}`);
+      const eq = a.includes('='), raw = eq ? a.slice(match.length + 1) : args[++i];
+      if (raw === undefined || (!eq && raw.startsWith('-')) || !raw.replace(/^["']|["']$/g, '')) fail(`Missing value for ${match}`);
+      opts[match.slice(2)] = raw.replace(/^["']|["']$/g, '');
+    } else if (a.startsWith('-')) {
+      fail(`Unknown flag: ${a}`);
+    } else {
+      pos.push(a);
+    }
+  }
+  if (pos.length > 1 || (pos.length === 1 && Object.keys(opts).length > 0)) fail('Invalid arguments');
+  const file = pos[0];
   const params = file
     ? JSON.parse(readFileSync(file, 'utf8'))
     : {
-        fg: getArg('--fg') ?? '#000000', bg: getArg('--bg') ?? '#ffffff',
-        width: getArg('--width') ? Number(getArg('--width')) : 44, height: getArg('--height') ? Number(getArg('--height')) : 44,
+        fg: opts.fg ?? '#000000', bg: opts.bg ?? '#ffffff',
+        width: opts.width ? Number(opts.width) : 44, height: opts.height ? Number(opts.height) : 44,
       };
   if (file && (params === null || typeof params !== 'object' || Array.isArray(params))) {
     throw new TypeError('WCAG file must be a JSON object');
