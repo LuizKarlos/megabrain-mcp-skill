@@ -17,6 +17,8 @@ Centralizes interface variables into semantic, theme-agnostic tokens:
 - **Fail-Closed Validation**: Rejects stylesheets containing unclosed blocks or unmapped design tokens.
 
 ```bash
-megabrain call design_tokens --validate --css_path "src/styles/theme.css"
-megabrain call css_validator --css_content "@import 'theme.css'; .btn { color: var(--primary); }"
+megabrain call megabrain.design_tokens '{"action":"validate","css_content":":root { --primary: #111827; }"}'
+megabrain call megabrain.css_validator '{"css_content":".btn { color: var(--primary); }"}'
 ```
+
+`design_tokens` usa `action` e `css_content`. Flags `--validate` e path de CSS não são o contrato.

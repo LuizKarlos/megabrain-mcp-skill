@@ -20,6 +20,12 @@ export function computeBlockHash(block) {
 }
 
 export function verifyLedger(blocks) {
+  if (blocks && typeof blocks === 'object' && !Array.isArray(blocks)) {
+    const extra = Object.keys(blocks).filter((k) => k !== 'blocks');
+    if (extra.length > 0) {
+      return { valid: false, blocks_verified: 0, errors: [`Unsupported envelope keys: ${extra.join(', ')}`] };
+    }
+  }
   const list = Array.isArray(blocks) ? blocks : (Array.isArray(blocks?.blocks) ? blocks.blocks : null);
   if (!list) return { valid: false, blocks_verified: 0, errors: ['Ledger must be an array of blocks'] };
   if (list.length === 0) return { valid: true, blocks_verified: 0, errors: [] };
@@ -27,7 +33,7 @@ export function verifyLedger(blocks) {
   const errors = [];
   const isGenesisPrevValid = (prev) =>
     prev === null || prev === undefined || prev === 0 || prev === '0' || prev === '' ||
-    (typeof prev === 'string' && /^[0-9a-fA-F]{64}$/.test(prev));
+    (typeof prev === 'string' && /^0{64}$/.test(prev));
 
   for (let i = 0; i < list.length; i++) {
     const block = list[i];
@@ -36,11 +42,18 @@ export function verifyLedger(blocks) {
       continue;
     }
 
+    const isSafeIndex = typeof block.index === 'number' && Number.isSafeInteger(block.index);
     if (i === 0) {
+      if (!isSafeIndex || block.index !== 0) {
+        errors.push(!isSafeIndex ? 'Block 0: index must be a safe integer' : 'Block 0: genesis index must be 0');
+      }
       if (!isGenesisPrevValid(block.previous_hash)) {
         errors.push(`Block 0: invalid previous_hash (${block.previous_hash})`);
       }
     } else {
+      if (!isSafeIndex || block.index !== i) {
+        errors.push(!isSafeIndex ? `Block ${i}: index must be a safe integer` : `Block ${i}: index sequence mismatch`);
+      }
       const prevHash = list[i - 1]?.hash;
       if (block.previous_hash !== prevHash) {
         errors.push(`Block ${i}: previous_hash mismatch (expected ${prevHash}, got ${block.previous_hash})`);

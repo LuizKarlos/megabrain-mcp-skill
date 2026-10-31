@@ -1,8 +1,8 @@
-import { getEndpoint, getToken } from "./config.js";
+import { getEndpoint, getToken, validateEndpoint } from "./config.js";
 
 // ponytail: single-turn HTTP fetch; upgrade to persistent SSE reader / WebSocket when bidirectional server notifications needed
 async function sendRpc(method, params = {}, options = {}) {
-  const endpoint = options.endpoint || getEndpoint();
+  const endpoint = validateEndpoint(options.endpoint || getEndpoint());
   const token = options.token !== undefined ? options.token : getToken();
   const origin = new URL(endpoint).origin;
 
@@ -14,13 +14,20 @@ async function sendRpc(method, params = {}, options = {}) {
     ...options.headers
   };
   if (!headers["Authorization"]) delete headers["Authorization"];
+  headers["MCP-Protocol-Version"] = "2026-07-28";
+  headers["Mcp-Method"] = method;
+  if (method === "tools/call" && params.name) headers["Mcp-Name"] = params.name;
+  params._meta = { ...(params._meta || {}), "io.modelcontextprotocol/protocolVersion": "2026-07-28" };
+  params._meta["io.modelcontextprotocol/clientCapabilities"] = params._meta["io.modelcontextprotocol/clientCapabilities"] || { tools: {} };
+  params._meta["io.modelcontextprotocol/clientInfo"] = params._meta["io.modelcontextprotocol/clientInfo"] || { name: "megabrain-cli", version: "3.2.0" };
 
+  const id = Date.now();
   const res = await fetch(endpoint, {
     method: "POST",
     headers,
     body: JSON.stringify({
       jsonrpc: "2.0",
-      id: Date.now(),
+      id,
       method,
       params
     }),
@@ -37,19 +44,26 @@ async function sendRpc(method, params = {}, options = {}) {
   }
 
   const contentType = res.headers.get("content-type") || "";
+  const match = (m) => Boolean(m && typeof m === "object" && m.jsonrpc === "2.0" && m.id === id && ("result" in m || "error" in m));
   let data;
   if (contentType.includes("text/event-stream")) {
-    const text = await res.text();
-    for (const line of text.split("\n")) {
-      if (line.startsWith("data:")) {
-        try {
-          data = JSON.parse(line.slice(5).trim());
+    const text = (await res.text()).replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+    for (const frame of text.split(/\n{2,}/)) {
+      const lines = frame.split("\n").filter((l) => l.startsWith("data:")).map((l) => l.slice(5).replace(/^ /, ""));
+      if (!lines.length) continue;
+      try {
+        const m = JSON.parse(lines.join("\n"));
+        if (match(m)) {
+          data = m;
           break;
-        } catch {}
-      }
+        }
+      } catch {}
     }
   } else {
-    data = await res.json();
+    try {
+      const m = await res.json();
+      if (match(m)) data = m;
+    } catch {}
   }
 
   if (!data) throw new Error("Empty or invalid response from server");
@@ -76,5 +90,5 @@ export async function checkHealth(options = {}) {
   } catch {
     // fallback to tool/ping if /health route is unreachable
   }
-  return callTool("megabrain_health", {}, options);
+  return callTool("megabrain.health", {}, options);
 }

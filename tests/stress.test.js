@@ -4,8 +4,9 @@ import { execFileSync } from 'node:child_process';
 import { writeFileSync, unlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const skillRoot = '/home/hermes/megabrain-mcp-skill';
+const skillRoot = join(fileURLToPath(import.meta.url), '..', '..');
 const { validateDAG } = await import(`${skillRoot}/scripts/dag_validator.js`);
 const { computeBlockHash, verifyLedger, canonicalStringify } = await import(`${skillRoot}/scripts/merkle_verify.js`);
 const { sliceAst } = await import(`${skillRoot}/scripts/ast_slice.js`);
@@ -233,7 +234,7 @@ test('Stress: Merkle Verify - Genesis block edge cases', () => {
   assert.equal(verifyLedger([mkGenesis(null)]).valid, true);
   assert.equal(verifyLedger([mkGenesis(undefined)]).valid, true);
   assert.equal(verifyLedger([mkGenesis('0'.repeat(64))]).valid, true);
-  assert.equal(verifyLedger([mkGenesis('f'.repeat(64))]).valid, true);
+  assert.equal(verifyLedger([mkGenesis('f'.repeat(64))]).valid, false);
 
   // Invalid genesis previous_hash
   const badPrev = verifyLedger([mkGenesis('not_a_valid_hash')]);

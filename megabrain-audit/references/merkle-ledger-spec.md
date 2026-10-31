@@ -20,5 +20,9 @@ Each ledger entry adheres to the canonical block structure:
 - `hash`: SHA-256 digest over `canonical_json({index, previous_hash, timestamp, event_type, data})`.
 
 ```bash
-megabrain call export_evidence_pack --work_id "wrk_prod_01"
+megabrain call megabrain.export_audit_ledger '{"work_id":"work_local_1"}'
+megabrain call megabrain.export_evidence_pack '{"work_id":"work_local_1"}'
+node scripts/merkle_verify.js ledger.json
 ```
+
+scripts/merkle_verify.js verifica somente a cadeia local. Export Merkle/Ed25519 soberano é export_audit_ledger / export_evidence_pack. Sem chave válida o kernel falha fechado. Referência não é assinatura verificada.

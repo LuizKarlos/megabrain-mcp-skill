@@ -3,7 +3,7 @@ import path from "node:path";
 import os from "node:os";
 import { fileURLToPath } from "node:url";
 import { checkHealth } from "../client.js";
-import { getEndpoint, getToken } from "../config.js";
+import { getEndpoint, getToken, validateEndpoint } from "../config.js";
 
 const SKILLS = [
   "megabrain-orchestrate",
@@ -22,6 +22,7 @@ export async function run({ positionals = [], flags = {} } = {}) {
   }
 
   const endpoint = flags?.endpoint || getEndpoint();
+  validateEndpoint(endpoint);
   const token = getToken();
   const rootDir = fileURLToPath(new URL("../../", import.meta.url));
   const destArg = typeof flags?.dest === "string" ? flags.dest : (positionals[0] || null);
@@ -61,11 +62,19 @@ export async function run({ positionals = [], flags = {} } = {}) {
   const nodeMajor = parseInt(process.versions.node.split(".")[0], 10);
   const nodeOk = nodeMajor >= 18;
 
+  function healthReady(health) {
+    if (!health || typeof health !== "object") return false;
+    const s = health.status != null ? String(health.status).toUpperCase() : "";
+    if (s === "DEGRADED" || s === "NOT_READY") return false;
+    if (health.ready === false || health.kernel_ready === false || health.isError === true) return false;
+    return true;
+  }
+
   let connected = false;
   const start = Date.now();
   try {
     const health = await checkHealth({ endpoint, token, signal: AbortSignal.timeout(3000) });
-    connected = Boolean(health);
+    connected = healthReady(health);
   } catch {}
   const latencyMs = Date.now() - start;
 
@@ -87,5 +96,6 @@ export async function run({ positionals = [], flags = {} } = {}) {
     console.log(`- Installed ${installed.length} items to ${destDir}`);
     if (harnesses.length) console.log(`- Harnesses: ${harnesses.join(", ")}`);
   }
+  if (report.status !== "ok") process.exitCode = 1;
   return report;
 }

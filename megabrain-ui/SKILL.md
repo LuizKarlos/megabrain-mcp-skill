@@ -26,23 +26,24 @@ Execute headless visual TDD, validate CSS against design tokens, and audit WCAG 
 
 ## Workflow & CLI
 
-Execute via `megabrain call` or `npx @megabrain/cli call`:
+Execute via `megabrain call` com nome qualificado e JSON objeto. O parser rejeita JSON que não seja objeto.
 
 ```bash
-# 1. Capture headless browser rendering and visual bounding boxes
-megabrain call playwright_capture '{"url": "http://localhost:3000", "viewport": {"width": 1280, "height": 800}}'
+# 1. Captura headless com fixture permitida e PNG. Sem URL remota/SSRF.
+# O retorno traz screenshot em base64 PNG; decodifique e valide os magic bytes `89 50 4E 47` antes de usar; URL remota/SSRF é proibida.
+megabrain call megabrain.playwright_capture '{"url":"http://127.0.0.1:8000/fixture.html","viewport":{"width":1280,"height":800}}'
 
-# 2. Summarize visual TDD results and assert zero violations
-megabrain call summarize_visual_tdd '{"html": "index.html", "css": "styles.css"}'
+# 2. Visual TDD usa html_content real, não path html/css.
+megabrain call megabrain.summarize_visual_tdd '{"html_content":"<main><h1>Ok</h1></main>"}'
 
-# 3. Audit DOM hierarchy and accessibility landmarks
-megabrain call dom_audit '{"html": "index.html"}'
+# 3. DOM audit com html_content.
+megabrain call megabrain.dom_audit '{"html_content":"<main><h1>Ok</h1></main>"}'
 
-# 4. Validate CSS syntax integrity and design token alignment
-megabrain call css_validator '{"css_content": "@import \"theme.css\"; .btn { color: var(--primary); }"}'
-megabrain call design_tokens '{"validate": true, "css_path": "styles/theme.css"}'
+# 4. CSS validator com css_content. design_tokens usa action + css_content, não validate nem path de CSS.
+megabrain call megabrain.css_validator '{"css_content":".btn { color: var(--primary); }"}'
+megabrain call megabrain.design_tokens '{"action":"validate","css_content":":root { --primary: #111827; } .btn { color: var(--primary); }"}'
 
-# 5. Check WCAG 2.1 AA contrast and 44x44px touch targets locally
+# 5. wcag_check.js local aceita JSON/flags. Não é CSS headless. JSON inválido falha fechado.
 node scripts/wcag_check.js --fg="#ffffff" --bg="#111827" --width=44 --height=44
 ```
 
@@ -51,6 +52,7 @@ node scripts/wcag_check.js --fg="#ffffff" --bg="#111827" --width=44 --height=44
 - **Visual TDD Gate**: Require zero violations (`violations_count == 0`, `status == "pass"`) before green verification.
 - **Contrast & Sizing Standards**: Enforce WCAG 2.1 AA contrast (>= 4.5:1 text, >= 3.0:1 large) and >= 44x44px targets.
 - **Token Invariance**: Strictly forbid undeclared raw hex/rgb color literals outside canonical root design tokens.
+- **Capture Invariants**: O retorno traz screenshot em base64 PNG; decodifique e valide os magic bytes `89 50 4E 47` antes de usar; URL remota/SSRF é proibida.
 
 ## References
 

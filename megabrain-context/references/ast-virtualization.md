@@ -18,6 +18,8 @@ Context slicing runs both server-side via MCP and locally via CLI utilities:
 - **Selective Dispatch**: Injects only structural outlines into prompt context, fetching full implementations on demand.
 
 ```bash
-node scripts/ast_slice.js src/service.ts --json
-megabrain call slice_ast_context --source_code "class Foo: pass" --language "python"
+node scripts/ast_slice.js src/service.ts
+megabrain call megabrain.slice_ast_context '{"source_code":"class Foo: pass","language":"python","target_name":"Foo"}'
 ```
+
+scripts/ast_slice.js é outline local limitado e preserva contratos de interface TypeScript. `megabrain.slice_ast_context` é AST Python no servidor. Sem flags `--json`. Sem prometer <3k tokens sem medir.

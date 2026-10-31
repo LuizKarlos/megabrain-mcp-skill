@@ -12,14 +12,15 @@ const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url),
 const { values: flags, positionals } = parseArgs({
   args: process.argv.slice(2),
   options: {
-    wait: { type: 'boolean' },
     json: { type: 'boolean' },
     endpoint: { type: 'string' },
+    dest: { type: 'string' },
+    'write-mcp': { type: 'boolean' },
     help: { type: 'boolean', short: 'h' },
     version: { type: 'boolean', short: 'v' },
   },
   allowPositionals: true,
-  strict: false,
+  strict: true,
 });
 if (flags.token !== undefined) { console.error('--token is not supported'); process.exit(1); }
 
@@ -47,8 +48,9 @@ Commands:
 Options:
   -h, --help       Show help
   -v, --version    Show version
-  --wait           Wait for execution completion
   --json           Output results in JSON format
+  --dest <dir>     Destination directory for setup
+  --write-mcp       Write MCP configuration during setup
   --endpoint <url> MCP server endpoint (default: $MEGABRAIN_ENDPOINT or https://mcp.atlascommand.dev/mcp)`);
   process.exit(0);
 }

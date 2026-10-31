@@ -19,6 +19,8 @@ Topological waves group mutually independent tasks into concurrent execution bat
 ## Execution via CLI
 
 ```bash
-megabrain call get_parallel_waves --work_id "wrk_01"
-node scripts/dag_validator.js tasks.json
+megabrain call megabrain.get_parallel_waves '{"work_id":"work_local_1"}'
+megabrain call megabrain.execute_pipeline '{"work_id":"work_local_1","test_commands":{"t1":{"command":"node --test tests/issue351_docs_pipeline.test.js"}}}'
 ```
+
+`execute_pipeline` exige `test_commands` verificados pelo harness. Sem `wave_index`. Sem provider.
