@@ -1,8 +1,8 @@
-import { getEndpoint, getToken } from "./config.js";
+import { getEndpoint, getToken, validateEndpoint } from "./config.js";
 
 // ponytail: single-turn HTTP fetch; upgrade to persistent SSE reader / WebSocket when bidirectional server notifications needed
 async function sendRpc(method, params = {}, options = {}) {
-  const endpoint = options.endpoint || getEndpoint();
+  const endpoint = validateEndpoint(options.endpoint || getEndpoint());
   const token = options.token !== undefined ? options.token : getToken();
   const origin = new URL(endpoint).origin;
 

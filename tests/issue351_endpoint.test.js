@@ -4,6 +4,7 @@ import os from "node:os";
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { validateEndpoint, getEndpoint, setEndpoint, saveConfig, loadConfig } from "../src/config.js";
+import { callTool } from "../src/client.js";
 
 function withXdg(fn) {
   const tmpdir = fs.mkdtempSync(path.join(os.tmpdir(), "ep-"));
@@ -183,4 +184,24 @@ test("EP_STORED_EMPTY_FAILS: endpoint persistido vazio nao cai no default", () =
     fs.writeFileSync(path.join(dir, "credentials.json"), JSON.stringify({ endpoint: "" }) + "\n", { mode: 0o600 });
     assert.throws(() => getEndpoint(), /valor ausente/);
   });
+});
+
+test("EP_SENDRPC_REJECT_BEFORE_FETCH", async () => {
+  let called = false, err;
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = () => { called = true; throw new Error("fetch called"); };
+  try {
+    try {
+      await callTool("megabrain.health", {}, { endpoint: "https://user:pass@mcp.example.test/mcp?token=super-secret", token: "tok" });
+    } catch (e) { err = e; }
+    await assert.rejects(
+      () => callTool("megabrain.health", {}, { endpoint: "https://user:pass@mcp.example.test/mcp?token=super-secret", token: "tok" }),
+      /userinfo|consulta sensivel/
+    );
+    assert.equal(called, false);
+    assert.ok(!err.message.includes("super-secret"));
+    assert.ok(!err.message.includes("tok"));
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
