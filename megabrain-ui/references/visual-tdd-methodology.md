@@ -17,8 +17,8 @@ Enforces deterministic RED-GREEN cycles before and during UI implementation:
 - **Layout Invariance**: Enforces responsive container boundaries and viewport scaling determinism.
 
 ```bash
-megabrain call megabrain.playwright_capture '{"html_content":"<button>Ok</button>","viewport":{"width":1280,"height":800}}'
+megabrain call megabrain.playwright_capture '{"url":"http://127.0.0.1:8000/fixture.html","viewport":{"width":1280,"height":800}}'
 megabrain call megabrain.summarize_visual_tdd '{"html_content":"<main><h1>Ok</h1></main>"}'
 ```
 
-Captura usa fixture/html_content e PNG. Sem URL remota. Sem SSRF. `html`/`css` path não é o contrato.
+Captura usa URL local válida e PNG; summarize_visual_tdd usa html_content. Sem URL remota. Sem SSRF. html/css path não é o contrato.
