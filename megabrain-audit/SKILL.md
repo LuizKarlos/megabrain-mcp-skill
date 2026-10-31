@@ -39,7 +39,8 @@ node scripts/merkle_verify.js ledger.json
 megabrain call megabrain.export_evidence_pack '{"work_id":"work_local_1"}'
 
 # 4. Replay usa JSON objeto, não flags. Envelope/receipts/replay seguem o schema real.
-megabrain call megabrain.time_travel_replay '{"work_id":"work_local_1","target_index":42}'
+megabrain call megabrain.time_travel_replay '{"work_id":"work_local_1","target_event_id":"evt_42"}'
+megabrain call megabrain.time_travel_replay '{"work_id":"work_local_1","target_timestamp":1790000000.0}'
 ```
 
 ## Cryptographic Invariants & Audit Guarantees
@@ -47,6 +48,8 @@ megabrain call megabrain.time_travel_replay '{"work_id":"work_local_1","target_i
 - **Hash Chain Continuity**: Each block enforces `hash == SHA-256(canonical_json(block - hash))` and links to `previous_hash`.
 - **Non-Repudiation**: Verification receipts require valid Ed25519 signatures from trusted verifier keys.
 - **Fail-Closed Verification**: Any hash divergence, malformed payload, or broken link halts downstream validation.
+- Índice de bloco: `typeof number` e `Number.isSafeInteger`; strings/null/float/unsafe são rejeitados.
+- Envelope aceito: array puro ou `{blocks:[...]}`; qualquer chave extra (attestation/receipt/certificate/merkle_root/signature) é `unsupported`.
 
 ## References
 

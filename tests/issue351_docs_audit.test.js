@@ -30,4 +30,15 @@ test('DOCS_AUDIT_REPLAY', () => {
   assert.match(receipt, /megabrain\.verify_subtask/);
   assert.match(replay, /JSON objeto/);
   assert.match(docs, /não prova Ed25519/);
+  assert.match(skill, /Number\.isSafeInteger/);
+  assert.match(skill, /\{blocks/);
+  assert.doesNotMatch(skill, /target_index/);
+  const calls = [...skill.matchAll(/megabrain call (\S+) '([^']+)'/g)].map(m => ({ tool: m[1], json: JSON.parse(m[2]) }));
+  assert.ok(calls.length >= 4);
+  const replayCalls = calls.filter(c => c.tool === 'megabrain.time_travel_replay');
+  assert.equal(replayCalls.length, 2);
+  for (const c of replayCalls) {
+    assert.ok('target_event_id' in c.json || 'target_timestamp' in c.json);
+    assert.equal('target_index' in c.json, false);
+  }
 });
