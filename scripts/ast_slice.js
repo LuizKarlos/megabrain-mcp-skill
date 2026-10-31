@@ -13,6 +13,7 @@ export function sliceAst(code = '', lang = 'auto') {
 
   const decls = [];
   let curr = null;
+  let ifaceDepth = 0;
   const isPy = detected === 'py';
   const startRe = isPy ? /^[ \t]*(?:class\s+\w+|(?:async\s+)?def\s+\w+)/ : /^[ \t]*(?:export\b|(?:async\s+)?function\*?\b|class\b|interface\b|type\b)/;
   const pyMatch = /^([ \t]*(?:class\s+\w+(?:\([^)]*\))?|(?:async\s+)?def\s+[\w$]+\s*\([^)]*\)\s*(?:->\s*[^:]+)?)\s*:)/;
@@ -27,13 +28,21 @@ export function sliceAst(code = '', lang = 'auto') {
     return -1;
   };
   const cleanJs = (s) => (/^[ \t]*(?:export\s+)?interface\b/.test(s) || /^[ \t]*export\s*\{/.test(s) ? s.trim() : (bodyIdx(s) >= 0 ? s.slice(0, bodyIdx(s)).trim() : s.replace(/\s*\{.*$/, '').trim()));
+  const bDelta = (s) => (s.match(/\{/g) || []).length - (s.match(/\}/g) || []).length;
 
   for (const line of code.split('\n')) {
     const trimmed = line.trim();
     if (!trimmed || (!isPy && (trimmed.startsWith('//') || trimmed.startsWith('/*')))) continue;
     if (curr) {
       curr += ' ' + trimmed;
-      if (isPy) {
+      if (ifaceDepth > 0) {
+        ifaceDepth += bDelta(trimmed);
+        if (ifaceDepth <= 0) {
+          decls.push(cleanJs(curr));
+          curr = null;
+          ifaceDepth = 0;
+        }
+      } else if (isPy) {
         const m = curr.match(pyMatch);
         if (m) { decls.push(m[1]); curr = null; }
       } else if (bodyIdx(curr) >= 0 || curr.includes(';')) {
@@ -46,11 +55,15 @@ export function sliceAst(code = '', lang = 'auto') {
         if (m) decls.push(m[1]);
         else curr = line.trimEnd();
       } else if (/^[ \t]*export\s*\{/.test(line) || /^[ \t]*type\b/.test(line)) decls.push(trimmed);
-      else if (bodyIdx(trimmed) >= 0) decls.push(cleanJs(trimmed));
+      else if (/^[ \t]*(?:export\s+)?interface\b/.test(line) && trimmed.includes('{') && bDelta(trimmed) > 0) {
+        curr = trimmed;
+        ifaceDepth = bDelta(trimmed);
+      } else if (bodyIdx(trimmed) >= 0) decls.push(cleanJs(trimmed));
       else if (line.includes(';') || (!line.includes('(') && !line.includes('function') && !line.includes('class'))) decls.push(trimmed);
       else curr = trimmed;
     }
   }
+  if (curr && ifaceDepth > 0) decls.push(`${cleanJs(curr)} [unterminated interface: syntax outside slicer capability]`);
   return { lang: detected, declarations: decls, outline: decls.join('\n') };
 }
 
