@@ -75,3 +75,39 @@ test("SETUP_HEALTHY_EXIT0", async () => {
     fs.rmSync(dest, { recursive: true, force: true });
   }
 });
+test("SETUP_READINESS_DEGRADED_EXIT", async () => {
+  let currentBody = {};
+  const server = http.createServer((req, res) => {
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(JSON.stringify(currentBody));
+  });
+  await new Promise((r) => server.listen(0, "127.0.0.1", r));
+  const { port } = server.address();
+  const cases = [
+    { status: "DEGRADED" },
+    { status: "NOT_READY" },
+    { status: "READY", ready: false },
+    { status: "READY", kernel_ready: false },
+    { status: "READY", isError: true }
+  ];
+  const dests = [];
+  try {
+    for (const body of cases) {
+      currentBody = body;
+      const dest = fs.mkdtempSync(join(os.tmpdir(), "mb445d-"));
+      dests.push(dest);
+      const res = await new Promise((resolve, reject) => {
+        const c = spawn(process.execPath, [BIN, "setup", "--json", "--dest", dest, "--endpoint", `http://127.0.0.1:${port}`], { env: process.env });
+        let out = "";
+        c.stdout.on("data", (d) => { out += d; });
+        c.on("error", reject);
+        c.on("close", (status) => resolve({ status, out }));
+      });
+      assert.notEqual(res.status, 0);
+      assert.equal(JSON.parse(res.out).status, "degraded");
+    }
+  } finally {
+    server.close();
+    for (const d of dests) fs.rmSync(d, { recursive: true, force: true });
+  }
+});
