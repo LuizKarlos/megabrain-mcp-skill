@@ -32,7 +32,7 @@ export function getLuminance(color) {
 
 export function getContrastRatio(fg, bg) {
   const l1 = getLuminance(fg), l2 = getLuminance(bg);
-  return Math.round(((Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05)) * 100) / 100;
+  return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
 }
 
 export function checkWcag(params = {}) {
