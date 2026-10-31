@@ -44,3 +44,24 @@ test("CALL_OK", async () => {
   assert.ok(exitCode === 0 || exitCode == null);
   assert.deepEqual(JSON.parse(stdout), result);
 });
+
+test("CALL_BUSINESS_FAILURE_MATRIX", async () => {
+  const failCases = [
+    { structuredContent: { status: "error" } },
+    { structuredContent: { error_code: "INVALID_ARGUMENT" } },
+    { content: [{ type: "text", text: JSON.stringify({ status: "error" }) }] },
+    { content: [{ type: "text", text: JSON.stringify({ error_code: "NO_EXECUTABLE_ROUTE" }) }] },
+  ];
+  for (const r of failCases) {
+    const { exitCode } = await runWith(r);
+    assert.equal(exitCode, 1);
+  }
+  const okCases = [
+    { content: [{ type: "text", text: "texto nao json" }], status: "ok" },
+    { content: [{ type: "text", text: JSON.stringify({ status: "ok" }) }], structuredContent: { status: "ok" } },
+  ];
+  for (const r of okCases) {
+    const { exitCode } = await runWith(r);
+    assert.ok(exitCode === 0 || exitCode == null);
+  }
+});

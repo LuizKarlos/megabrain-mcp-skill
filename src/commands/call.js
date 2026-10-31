@@ -11,6 +11,33 @@ export function validateToolName(name) {
   return name;
 }
 
+function hasErr(o) {
+  return Boolean(
+    o && typeof o === "object" && !Array.isArray(o) &&
+    (String(o.status).toLowerCase() === "error" || (typeof o.error_code === "string" && o.error_code.length > 0))
+  );
+}
+
+export function isBusinessFailure(result) {
+  try {
+    if (!result || typeof result !== "object" || Array.isArray(result)) return false;
+    if (result.isError === true || String(result.status).toLowerCase() === "error") return true;
+    if (hasErr(result.structuredContent)) return true;
+    if (Array.isArray(result.content)) {
+      for (const item of result.content) {
+        if (item && item.type === "text" && typeof item.text === "string") {
+          try {
+            if (hasErr(JSON.parse(item.text))) return true;
+          } catch {}
+        }
+      }
+    }
+    return false;
+  } catch {
+    return false;
+  }
+}
+
 export async function run({ positionals = [], flags = {}, callToolFn = callTool }) {
   const pos = Array.isArray(positionals) ? positionals : [];
   const [name, rawArgs] = pos;
@@ -29,8 +56,7 @@ export async function run({ positionals = [], flags = {}, callToolFn = callTool 
     }
   }
   const result = await callToolFn(name, args, { endpoint: flags.endpoint, token: flags.token });
-  const businessFail = result && (result.isError === true || String(result.status || "").toLowerCase() === "error");
-  if (businessFail) process.exitCode = 1;
+  if (isBusinessFailure(result)) process.exitCode = 1;
   if (flags.json) {
     console.log(JSON.stringify(result));
   } else {
