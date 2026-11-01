@@ -37,8 +37,9 @@ megabrain --help
 | `megabrain-pipeline` | Decomposição DAG, ondas topológicas, auto-healing |
 | `megabrain-review` | Revisão dual-blind, anti-slop lint, voice calibration |
 | `megabrain-audit` | Merkle ledger, Ed25519 receipts, time-travel replay |
-| `megabrain-context` | AST slicing, OpenAPI 3.1 contract synthesis, pacotes <3k tokens |
+| `megabrain-context` | AST slicing, OpenAPI 3.1 contract synthesis, pacotes delimitados, sem teto prometido |
 | `megabrain-ui` | Visual TDD headless, auditoria DOM, WCAG 2.1 e design tokens |
+| `megabrain-surface` | Referência completa: tools, aliases, resources, prompts, roles, transportes, observabilidade e erros |
 
 ## Local Tooling Scripts
 

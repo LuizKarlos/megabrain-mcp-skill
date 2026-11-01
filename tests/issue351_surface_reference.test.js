@@ -280,3 +280,64 @@ test("megabrain surface error contract part 9", async () => {
   assert.equal(isBusinessFailure({ status: "completed" }), false);
   assert.equal(isBusinessFailure({ content: [{ type: "text", text: "Healthy plain text" }] }), false);
 });
+
+// ponytail: AST inline check relies on local python3 ast; upgrade to standalone parser if python absent.
+test("test_mcp_surface_coverage_closure", async () => {
+  const { execSync } = await import("node:child_process");
+  const CANONICAL = [
+    "megabrain.adjudicate_consensus", "megabrain.anti_slop_lint", "megabrain.arbitrate_concurrency",
+    "megabrain.coordinate_mission_swarm", "megabrain.create_checkpoint", "megabrain.css_validator",
+    "megabrain.decompose", "megabrain.design_tokens", "megabrain.dispatch_subtask", "megabrain.dom_audit",
+    "megabrain.evaluate_execution_canary", "megabrain.execute_pipeline", "megabrain.export_audit_ledger",
+    "megabrain.export_client_config", "megabrain.export_evidence_pack", "megabrain.get_mission_scorecard",
+    "megabrain.get_parallel_waves", "megabrain.get_telemetry_report", "megabrain.grant_approval",
+    "megabrain.heal_dependency_graph", "megabrain.health", "megabrain.infer", "megabrain.inspect", "megabrain.inspect_work",
+    "megabrain.orchestrate", "megabrain.playwright_capture", "megabrain.readability_score", "megabrain.recommend",
+    "megabrain.refine_prompt", "megabrain.resume_pipeline", "megabrain.rollback_checkpoint",
+    "megabrain.slice_ast_context", "megabrain.summarize_visual_tdd", "megabrain.synthesize_backend_contract",
+    "megabrain.synthesize_subtask", "megabrain.time_travel_replay", "megabrain.verify_subtask", "megabrain.voice_calibrate"
+  ];
+  assert.equal(CANONICAL.length, 38, "38 tools no manifest canonical");
+
+  const files = fs.readdirSync(".", { recursive: true }).filter((f) => f.endsWith(".md") && !f.includes("node_modules"));
+  const regex = /megabrain call (megabrain[._][a-z0-9_]+) '([^']+)'/g;
+  const found = new Map();
+
+  for (const file of files) {
+    const text = fs.readFileSync(file, "utf8");
+    for (const match of text.matchAll(regex)) {
+      const tool = match[1].replace(/^megabrain_/, "megabrain.");
+      const parsed = JSON.parse(match[2]);
+      if (!found.has(tool)) found.set(tool, []);
+      found.get(tool).push(parsed);
+    }
+  }
+
+  for (const tool of CANONICAL) {
+    assert.ok(found.has(tool), "tool ausente nos docs: " + tool);
+  }
+  assert.equal(found.size, 38, "38/38 presentes");
+
+  const kPath = process.env.MEGABRAIN_KERNEL_SOURCE || "/srv/megabrain-dev/repository/runtime/mcp_server.py";
+  if (fs.existsSync(kPath)) {
+    const py = 'python3 - <<PY\nimport ast, json\ntree = ast.parse(open("' + kPath + '").read())\nprint(json.dumps({n.name: [a.arg for a in n.args.args] for n in ast.walk(tree) if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))}))\nPY';
+    const sigs = JSON.parse(execSync(py, { encoding: "utf8" }));
+    for (const tool of CANONICAL) {
+      const bare = tool.replace(/^megabrain\./, "");
+      const allowed = sigs[`${bare}_tool`] ?? sigs[bare];
+      assert.ok(allowed, "assinatura ausente: " + tool);
+      for (const ex of found.get(tool) || []) {
+        if (typeof ex === "object" && ex !== null && !Array.isArray(ex)) {
+          for (const key of Object.keys(ex)) {
+            assert.ok(allowed.includes(key), `chave ${key} nao permitida para ${tool}`);
+          }
+        }
+      }
+    }
+  }
+
+  const surfaceSkill = fs.readFileSync("megabrain-surface/SKILL.md", "utf8");
+  for (const topic of ["resources", "prompts", "roles", "transports", "metrics", "errors"]) {
+    assert.ok(new RegExp(topic, "i").test(surfaceSkill), "SKILL deve cobrir " + topic);
+  }
+});
