@@ -18,8 +18,8 @@ When a subtask fails deterministic test gates (`verify_subtask`):
 4. **Retry Budgeting**: Bounded to $N$ attempts (default: 2); transitions to fail-closed or skipped on exhaustion.
 
 ```bash
-megabrain call megabrain.heal_dependency_graph '{"work_id":"work_local_1","tasks":[{"id":"t1","status":"BLOCKED"}],"canary":true}'
-megabrain call megabrain.synthesize_subtask '{"work_id":"work_local_1","parent_id":"t1","role":"implementer"}'
+megabrain call megabrain.heal_dependency_graph '{"tasks":[{"id":"t1","title":"t1","category":"IMPLEMENTATION","dependencies":["missing_cap"],"status":"BLOCKED"}],"completed_task_ids":[],"failed_task_ids":["t1"],"capability_catalog":{"missing_cap":{"title":"Heal","category":"IMPLEMENTATION","produces":["missing_cap"]}}}'
+megabrain call megabrain.synthesize_subtask '{"work_id":"work_local_1","parent_task_id":"t1","new_task":{"id":"t1_heal_missing_cap","title":"Heal","category":"IMPLEMENTATION","dependencies":["t1"]}}'
 ```
 
-Cura reconhecida, opção canário e estado terminal. Sem executor o kernel devolve NOT_EXECUTED, nunca SUCCESS falso. Sem execução de provider.
+Cura reconhecida e estado terminal. Sem executor o kernel devolve NOT_EXECUTED, nunca SUCCESS falso. Sem execução de provider.
